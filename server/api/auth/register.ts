@@ -26,8 +26,9 @@ export default defineEventHandler(async (event) => {
     
     setCookie(event, 'auth_session', sessionId, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 7, // 1 week
+      secure: process.env.NODE_ENV === 'production' && !process.env.DB_HOST?.includes('localhost'),
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
       path: '/',
     });
 

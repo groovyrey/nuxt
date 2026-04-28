@@ -66,11 +66,11 @@ export default defineEventHandler(async (event) => {
     
     setCookie(event, 'auth_session', sessionId, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'production' && !process.env.DB_HOST?.includes('localhost'),
+      sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
     });
-
     return { success: true, username: matchedUser.username };
   } catch (error: any) {
     console.error('Face Login Server Error:', error);

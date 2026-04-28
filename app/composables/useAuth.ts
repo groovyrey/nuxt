@@ -5,9 +5,10 @@ export const useAuth = () => {
   const fetchUser = async () => {
     isLoading.value = true;
     try {
-      const { data } = await useFetch('/api/auth/me');
-      user.value = (data.value as any)?.user;
+      const data = await $fetch('/api/auth/me');
+      user.value = data?.user || null;
     } catch (e) {
+      console.error('Failed to fetch user:', e);
       user.value = null;
     } finally {
       isLoading.value = false;
