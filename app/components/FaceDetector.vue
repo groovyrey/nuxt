@@ -6,6 +6,7 @@ const videoRef = ref<HTMLVideoElement | null>(null);
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+const isCameraStarted = ref(false);
 
 let detectionInterval: number | null = null;
 
@@ -14,28 +15,27 @@ const loadModels = async () => {
     const MODEL_URL = window.location.origin + '/models';
     console.log('Attempting to load models from:', MODEL_URL);
     
-    // Load models sequentially to find which one fails
     await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-    console.log('TinyFaceDetector loaded');
     await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-    console.log('FaceLandmark68Net loaded');
     await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-    console.log('FaceRecognitionNet loaded');
     await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-    console.log('FaceExpressionNet loaded');
     
     console.log('All models loaded successfully');
   } catch (err: any) {
     console.error('Error loading models:', err);
-    error.value = `Failed to load models: ${err.message || 'Unknown error'}. Check console for details.`;
+    error.value = `Neural Engine Error: ${err.message || 'Check network connection'}`;
   }
 };
 
-const isCameraStarted = ref(false);
-
 const startVideo = async () => {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      video: { 
+        facingMode: 'user',
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      } 
+    });
     if (videoRef.value) {
       videoRef.value.srcObject = stream;
       isCameraStarted.value = true;
@@ -43,14 +43,13 @@ const startVideo = async () => {
     }
   } catch (err) {
     console.error('Error starting video:', err);
-    error.value = 'Could not access camera. Please ensure you have granted permission in your browser settings.';
+    error.value = 'Biometric sensor access denied. Check permissions.';
   }
 };
 
 const handleVideoPlay = () => {
   if (!videoRef.value || !canvasRef.value) return;
 
-  // Use the actual displayed size of the video element
   const updateDimensions = () => {
     if (!videoRef.value || !canvasRef.value) return;
     const displaySize = {
@@ -62,16 +61,11 @@ const handleVideoPlay = () => {
   };
 
   let displaySize = updateDimensions();
-
-  // Re-sync dimensions if window resizes
-  window.addEventListener('resize', () => {
-    displaySize = updateDimensions();
-  });
+  window.addEventListener('resize', () => { displaySize = updateDimensions(); });
 
   detectionInterval = window.setInterval(async () => {
     if (!videoRef.value || !canvasRef.value || !isCameraStarted.value) return;
 
-    // Ensure we use the latest dimensions
     if (videoRef.value.offsetWidth !== displaySize?.width) {
       displaySize = updateDimensions();
     }
@@ -88,7 +82,7 @@ const handleVideoPlay = () => {
       ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
       
       if (detections.length > 0) {
-        // Explicitly set drawing options for visibility
+        // Custom drawing colors for dark theme
         faceapi.draw.drawDetections(canvasRef.value, resizedDetections);
         faceapi.draw.drawFaceLandmarks(canvasRef.value, resizedDetections);
         faceapi.draw.drawFaceExpressions(canvasRef.value, resizedDetections);
@@ -103,9 +97,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  if (detectionInterval) {
-    clearInterval(detectionInterval);
-  }
+  if (detectionInterval) clearInterval(detectionInterval);
   if (videoRef.value && videoRef.value.srcObject) {
     const stream = videoRef.value.srcObject as MediaStream;
     stream.getTracks().forEach(track => track.stop());
@@ -115,15 +107,28 @@ onUnmounted(() => {
 
 <template>
   <div class="face-detector-container">
-    <div v-if="isLoading" class="status">Loading AI Models...</div>
-    <div v-if="error" class="status error">{{ error }}</div>
+    <div v-if="error" class="error-toast">
+      <span class="warning-icon">⚠</span>
+      {{ error }}
+    </div>
     
-    <div v-if="!isCameraStarted && !isLoading" class="controls">
-      <button @click="startVideo" class="start-btn">Enable Camera</button>
-      <p class="hint">Click to request camera permission</p>
+    <div v-if="!isCameraStarted && !isLoading" class="setup-screen">
+      <div class="scanner-rings">
+        <div class="ring"></div>
+        <div class="ring"></div>
+      </div>
+      <button @click="startVideo" class="start-btn">
+        INITIALIZE SCANNER
+      </button>
+      <p class="hint">Biometric authentication required</p>
     </div>
 
-    <div class="video-wrapper" v-show="isCameraStarted">
+    <div class="video-container" v-show="isCameraStarted">
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+      
       <video
         ref="videoRef"
         autoplay
@@ -132,87 +137,146 @@ onUnmounted(() => {
         @play="handleVideoPlay"
       ></video>
       <canvas ref="canvasRef"></canvas>
+      
+      <div class="scanning-line" v-if="isCameraStarted"></div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .face-detector-container {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 1.5rem;
-  width: 100%;
 }
 
-.status {
-  padding: 1rem 2rem;
-  background: #333;
+.error-toast {
+  position: absolute;
+  top: 1rem;
+  background: #ff0044;
+  color: white;
+  padding: 0.8rem 1.5rem;
   border-radius: 8px;
-  color: #42b883;
-  font-weight: bold;
+  font-weight: 600;
+  font-size: 0.8rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideDown 0.3s ease;
 }
 
-.error {
-  background: #4a1a1a;
-  color: #ff6b6b;
-  border: 1px solid #ff6b6b;
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
-.controls {
+.setup-screen {
   text-align: center;
-  padding: 2rem;
+}
+
+.scanner-rings {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 2rem;
+}
+
+.ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid #00ff8833;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.ring:nth-child(2) {
+  animation-delay: 1s;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(1.5); opacity: 0; }
 }
 
 .start-btn {
-  background: #42b883;
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
-  font-size: 1.2rem;
-  font-weight: bold;
-  border-radius: 50px;
+  background: transparent;
+  color: #00ff88;
+  border: 1px solid #00ff88;
+  padding: 1rem 2.5rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  border-radius: 4px;
   cursor: pointer;
-  transition: transform 0.2s, background 0.2s;
-  box-shadow: 0 4px 15px rgba(66, 184, 131, 0.4);
+  transition: all 0.3s;
 }
 
 .start-btn:hover {
-  background: #3aa675;
-  transform: translateY(-2px);
-}
-
-.start-btn:active {
-  transform: translateY(0);
+  background: #00ff88;
+  color: #000;
+  box-shadow: 0 0 30px #00ff8866;
 }
 
 .hint {
-  margin-top: 1rem;
-  color: #888;
-  font-size: 0.9rem;
+  color: #444;
+  font-size: 0.7rem;
+  margin-top: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
-.video-wrapper {
+.video-container {
   position: relative;
-  display: inline-block;
-  background: #000;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  line-height: 0; /* Remove extra space below video */
+  width: 100%;
+  max-width: 640px;
+  line-height: 0;
 }
+
+.corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #00ff88;
+  z-index: 5;
+}
+
+.tl { top: -10px; left: -10px; border-right: none; border-bottom: none; }
+.tr { top: -10px; right: -10px; border-left: none; border-bottom: none; }
+.bl { bottom: -10px; left: -10px; border-right: none; border-top: none; }
+.br { bottom: -10px; right: -10px; border-left: none; border-top: none; }
 
 video {
   width: 100%;
-  max-width: 640px;
-  height: auto;
-  display: block;
+  border-radius: 4px;
+  filter: grayscale(0.2) contrast(1.1);
 }
 
 canvas {
   position: absolute;
   top: 0;
   left: 0;
-  pointer-events: none;
+  width: 100%;
+  height: 100%;
+}
+
+.scanning-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00ff88, transparent);
+  animation: scan 3s linear infinite;
+  z-index: 4;
+  box-shadow: 0 0 15px #00ff88;
+}
+
+@keyframes scan {
+  0% { top: 0%; }
+  100% { top: 100%; }
 }
 </style>
