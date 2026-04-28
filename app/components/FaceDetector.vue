@@ -17,13 +17,14 @@ const loadModels = async () => {
     const MODEL_URL = window.location.origin + '/models';
     console.log('Attempting to load models from:', MODEL_URL);
     
-    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    // Using SSD Mobilenet V1 for much better biometric accuracy
+    await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
     await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
     await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
     await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
     await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
     
-    console.log('All models loaded successfully');
+    console.log('High-precision models loaded');
   } catch (err: any) {
     console.error('Error loading models:', err);
     error.value = `Neural Engine Error: ${err.message || 'Check network connection'}`;
@@ -81,48 +82,41 @@ const handleVideoPlay = () => {
         displaySize = updateDimensions();
       }
 
-      // Increased input size for better recognition accuracy
-      const task = faceapi.detectAllFaces(
-        videoRef.value, 
-        new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 })
-      );
+      // detectSingleFace is much faster and more accurate for authentication
+      const detection = await faceapi.detectSingleFace(
+        videoRef.value,
+        new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 })
+      )
+      .withFaceLandmarks()
+      .withFaceDescriptor()
+      .withFaceExpressions()
+      .withAgeAndGender();
 
-      // Increase heavy inference frequency to every 3rd frame
-      const detections = frameCount % 3 === 0 
-        ? await task.withFaceLandmarks().withFaceDescriptor().withFaceExpressions().withAgeAndGender()
-        : await task;
-
-      if (detections && detections.length > 0) {
-        const resizedDetections = faceapi.resizeResults(detections, displaySize!);
+      if (detection) {
+        const resizedDetection = faceapi.resizeResults(detection, displaySize!);
         const ctx = canvasRef.value.getContext('2d', { alpha: true });
 
         if (ctx) {
           ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
-          faceapi.draw.drawDetections(canvasRef.value, resizedDetections);
+          faceapi.draw.drawDetections(canvasRef.value, resizedDetection);
+          faceapi.draw.drawFaceLandmarks(canvasRef.value, resizedDetection);
+          faceapi.draw.drawFaceExpressions(canvasRef.value, resizedDetection);
 
-          // Detailed check for face recognition data
-          const best = detections[0] as any;
-          if (best && 'landmarks' in best) {
-            faceapi.draw.drawFaceLandmarks(canvasRef.value, resizedDetections);
-            faceapi.draw.drawFaceExpressions(canvasRef.value, resizedDetections);
+          const expression = Object.entries(detection.expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
 
-            const expression = Object.entries(best.expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
-
-            if (best.descriptor) {
-              console.log('BIOMETRIC SUCCESS: Descriptor generated');
-              emit('detected', {
-                age: Math.round(best.age),
-                gender: best.gender,
-                genderProbability: Math.round(best.genderProbability * 100),
-                expression: expression,
-                descriptor: Array.from(best.descriptor)
-              });
-            } else {
-              console.warn('BIOMETRIC WARNING: Landmarks found but descriptor missing');
-            }
+          if (detection.descriptor) {
+            if (frameCount % 5 === 0) console.log('BIOMETRIC SUCCESS: Descriptor generated');
+            emit('detected', {
+              age: Math.round(detection.age),
+              gender: detection.gender,
+              genderProbability: Math.round(detection.genderProbability * 100),
+              expression: expression,
+              descriptor: Array.from(detection.descriptor)
+            });
           }
         }
-      } else {        if (frameCount % 10 === 0) emit('detected', null);
+      } else {
+        if (frameCount % 10 === 0) emit('detected', null);
         const ctx = canvasRef.value.getContext('2d');
         ctx?.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
       }
