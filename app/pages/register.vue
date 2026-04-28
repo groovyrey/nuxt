@@ -47,7 +47,7 @@
 
           <div v-if="error" class="error-msg">{{ error }}</div>
 
-          <button type="submit" class="submit-btn" :disabled="loading || !faceCaptured">
+          <button type="submit" class="submit-btn" :disabled="loading">
             {{ loading ? 'PROCESSING...' : 'INITIALIZE PROFILE' }}
           </button>
 
@@ -77,6 +77,7 @@ const form = ref({
 
 const handleDetection = (data) => {
   if (data && data.descriptor) {
+    console.log('Biometric data received by Registry');
     capturedDescriptor.value = data.descriptor;
     faceCaptured.value = true;
     // Only auto-fill if the user hasn't touched these fields
@@ -86,10 +87,16 @@ const handleDetection = (data) => {
 };
 
 const handleRegister = async () => {
+  if (!faceCaptured.value) {
+    error.value = 'Biometric scan incomplete. Please align face.';
+    return;
+  }
+  
   loading.value = true;
   error.value = '';
   
   try {
+    console.log('Submitting profile to Neural Grid...');
     await $fetch('/api/auth/register', {
       method: 'POST',
       body: {
@@ -101,6 +108,7 @@ const handleRegister = async () => {
     await fetchUser();
     navigateTo('/');
   } catch (err) {
+    console.error('Registration error:', err);
     error.value = err.data?.statusMessage || 'Registration failed';
   } finally {
     loading.value = false;

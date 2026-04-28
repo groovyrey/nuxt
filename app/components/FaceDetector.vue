@@ -107,13 +107,17 @@ const handleVideoPlay = () => {
             
             const best = detections[0] as any;
             const expression = Object.entries(best.expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
-            emit('detected', {
-              age: Math.round(best.age),
-              gender: best.gender,
-              genderProbability: Math.round(best.genderProbability * 100),
-              expression: expression,
-              descriptor: Array.from(best.descriptor)
-            });
+            
+            if (best.descriptor) {
+              console.log('Emitting descriptor for biometric profile');
+              emit('detected', {
+                age: Math.round(best.age),
+                gender: best.gender,
+                genderProbability: Math.round(best.genderProbability * 100),
+                expression: expression,
+                descriptor: Array.from(best.descriptor)
+              });
+            }
           }
         }
       } else {
