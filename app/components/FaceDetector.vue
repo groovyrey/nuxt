@@ -11,17 +11,23 @@ let detectionInterval: number | null = null;
 
 const loadModels = async () => {
   try {
-    const MODEL_URL = '/models';
-    await Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-      faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
-    ]);
-    console.log('Models loaded');
-  } catch (err) {
+    const MODEL_URL = window.location.origin + '/models';
+    console.log('Attempting to load models from:', MODEL_URL);
+    
+    // Load models sequentially to find which one fails
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    console.log('TinyFaceDetector loaded');
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    console.log('FaceLandmark68Net loaded');
+    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+    console.log('FaceRecognitionNet loaded');
+    await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+    console.log('FaceExpressionNet loaded');
+    
+    console.log('All models loaded successfully');
+  } catch (err: any) {
     console.error('Error loading models:', err);
-    error.value = 'Failed to load face detection models.';
+    error.value = `Failed to load models: ${err.message || 'Unknown error'}. Check console for details.`;
   }
 };
 
