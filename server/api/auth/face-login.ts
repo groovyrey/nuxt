@@ -1,5 +1,5 @@
 import { useDb } from '../../utils/db';
-import { createSession, findMatchingUserByFace } from '../../utils/auth';
+import { createSession, findMatchingUserByFace, euclideanDistance, EUCLIDEAN_THRESHOLD } from '../../utils/auth';
 
 export default defineEventHandler(async (event) => {
   try {
@@ -39,7 +39,6 @@ export default defineEventHandler(async (event) => {
         storedDescriptor = user.face_descriptor;
       }
 
-      const { euclideanDistance, EUCLIDEAN_THRESHOLD } = await import('../../utils/auth');
       const distance = euclideanDistance(faceDescriptor, storedDescriptor);
 
       if (distance >= EUCLIDEAN_THRESHOLD) {
@@ -71,7 +70,7 @@ export default defineEventHandler(async (event) => {
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
     });
-    return { success: true, username: matchedUser.username };
+    return { success: true, username: finalUsername };
   } catch (error: any) {
     console.error('Face Login Server Error:', error);
     if (error.statusCode) throw error;
