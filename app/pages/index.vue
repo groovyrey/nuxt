@@ -13,48 +13,52 @@
     
     <main class="content-grid">
       <div class="vision-card">
-        <ClientOnly>
-          <FaceDetector @detected="handleDetection" />
-          <template #fallback>
-            <div class="loading-state">
-              <div class="spinner"></div>
-              <span>Initializing Neural Engine...</span>
+        <div class="user-profile-display">
+          <div class="profile-header">
+            <div class="avatar-placeholder">
+              <span class="initials">{{ user.username.charAt(0).toUpperCase() }}</span>
             </div>
-          </template>
-        </ClientOnly>
+            <div class="profile-info">
+              <h2>{{ user.username }}</h2>
+              <p class="email">{{ user.email }}</p>
+            </div>
+          </div>
+          
+          <div class="profile-details">
+            <div class="detail-item">
+              <label>BIO-METRIC ID</label>
+              <span>{{ user.username.toUpperCase() }}-NX-{{ Math.floor(Math.random() * 10000) }}</span>
+            </div>
+            <div class="detail-item">
+              <label>AGE</label>
+              <span>{{ user.age || 'NOT RECORDED' }} YEARS</span>
+            </div>
+            <div class="detail-item">
+              <label>GENDER</label>
+              <span>{{ user.gender?.toUpperCase() || 'NOT RECORDED' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>CLEARANCE LEVEL</label>
+              <span class="accent">LEVEL 4 OPERATOR</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="info-sidebar">
         <div class="status-item highlight">
-          <label>ANALYSIS</label>
-          <span class="value" :class="{ 'scanning': !currentDetection }">
-            {{ currentDetection ? 'TARGET IDENTIFIED' : 'SCANNING...' }}
-          </span>
+          <label>ACCESS STATUS</label>
+          <span class="value">AUTHORIZED</span>
         </div>
         
-        <div class="biometrics" v-if="currentDetection">
-          <div class="status-item">
-            <label>AGE EST.</label>
-            <span class="value">{{ currentDetection.age }} YEARS</span>
-          </div>
-          <div class="status-item">
-            <label>GENDER</label>
-            <span class="value">{{ currentDetection.gender.toUpperCase() }} ({{ currentDetection.genderProbability }}%)</span>
-          </div>
-          <div class="status-item">
-            <label>MOOD</label>
-            <span class="value text-uppercase">{{ currentDetection.expression }}</span>
-          </div>
-        </div>
-
         <div class="status-item">
           <label>SYSTEM STATUS</label>
           <span class="value">OPERATIONAL</span>
         </div>
 
-        <div class="status-item" v-if="user">
-          <label>LOGGED IN AS</label>
-          <span class="value">{{ user.email }}</span>
+        <div class="status-item">
+          <label>NETWORK</label>
+          <span class="value">ENCRYPTED GRID</span>
         </div>
       </div>
     </main>
@@ -72,11 +76,6 @@
 <script setup>
 const { user, isLoading, logout } = useAuth();
 const isOnline = ref(true)
-const currentDetection = ref(null)
-
-const handleDetection = (data) => {
-  currentDetection.value = data
-}
 
 watch(isLoading, (loading) => {
   if (!loading && !user.value) {
@@ -92,6 +91,73 @@ watch(isLoading, (loading) => {
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.user-profile-display {
+  width: 100%;
+  max-width: 600px;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.avatar-placeholder {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, var(--accent-green), #00aadd);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+}
+
+.initials {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #000;
+}
+
+.profile-info h2 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+}
+
+.profile-info .email {
+  color: var(--text-dim);
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+}
+
+.profile-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-item label {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.detail-item span {
+  font-family: monospace;
+  font-size: 1rem;
 }
 
 .glass-header {
