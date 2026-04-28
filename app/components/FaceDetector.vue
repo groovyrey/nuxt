@@ -76,53 +76,57 @@ const handleVideoPlay = () => {
     isDetecting = true;
     frameCount++;
 
-    if (videoRef.value.offsetWidth !== displaySize?.width) {
-      displaySize = updateDimensions();
-    }
-
-    // High-frequency face tracking
-    const task = faceapi.detectAllFaces(
-      videoRef.value, 
-      new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 })
-    );
-
-    // Staggered heavy inferences (every 6th frame ~ 5 times per second)
-    const detections = frameCount % 6 === 0 
-      ? await task.withFaceLandmarks().withFaceDescriptor().withFaceExpressions().withAgeAndGender()
-      : await task;
-
-    if (detections.length > 0) {
-      const resizedDetections = faceapi.resizeResults(detections, displaySize!);
-      const ctx = canvasRef.value.getContext('2d', { alpha: true });
-      
-      if (ctx) {
-        ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
-        faceapi.draw.drawDetections(canvasRef.value, resizedDetections);
-        
-        // Only draw complex features when they were actually detected in this frame
-        if ('landmarks' in detections[0]) {
-          faceapi.draw.drawFaceLandmarks(canvasRef.value, resizedDetections);
-          faceapi.draw.drawFaceExpressions(canvasRef.value, resizedDetections);
-          
-          const best = detections[0] as any;
-          const expression = Object.entries(best.expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
-          emit('detected', {
-            age: Math.round(best.age),
-            gender: best.gender,
-            genderProbability: Math.round(best.genderProbability * 100),
-            expression: expression,
-            descriptor: Array.from(best.descriptor)
-          });
-        }
+    try {
+      if (videoRef.value.offsetWidth !== displaySize?.width) {
+        displaySize = updateDimensions();
       }
-    } else {
-      if (frameCount % 10 === 0) emit('detected', null);
-      const ctx = canvasRef.value.getContext('2d');
-      ctx?.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
-    }
 
-    isDetecting = false;
-    requestAnimationFrame(detect);
+      // High-frequency face tracking
+      const task = faceapi.detectAllFaces(
+        videoRef.value, 
+        new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 })
+      );
+
+      // Staggered heavy inferences (every 6th frame ~ 5 times per second)
+      const detections = frameCount % 6 === 0 
+        ? await task.withFaceLandmarks().withFaceDescriptor().withFaceExpressions().withAgeAndGender()
+        : await task;
+
+      if (detections && detections.length > 0) {
+        const resizedDetections = faceapi.resizeResults(detections, displaySize!);
+        const ctx = canvasRef.value.getContext('2d', { alpha: true });
+        
+        if (ctx) {
+          ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
+          faceapi.draw.drawDetections(canvasRef.value, resizedDetections);
+          
+          // Only draw complex features when they were actually detected in this frame
+          if (detections[0] && 'landmarks' in detections[0]) {
+            faceapi.draw.drawFaceLandmarks(canvasRef.value, resizedDetections);
+            faceapi.draw.drawFaceExpressions(canvasRef.value, resizedDetections);
+            
+            const best = detections[0] as any;
+            const expression = Object.entries(best.expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
+            emit('detected', {
+              age: Math.round(best.age),
+              gender: best.gender,
+              genderProbability: Math.round(best.genderProbability * 100),
+              expression: expression,
+              descriptor: Array.from(best.descriptor)
+            });
+          }
+        }
+      } else {
+        if (frameCount % 10 === 0) emit('detected', null);
+        const ctx = canvasRef.value.getContext('2d');
+        ctx?.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
+      }
+    } catch (err) {
+      console.error('Detection error:', err);
+    } finally {
+      isDetecting = false;
+      requestAnimationFrame(detect);
+    }
   };
 
   detect();

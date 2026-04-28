@@ -79,8 +79,9 @@ const handleDetection = (data) => {
   if (data && data.descriptor) {
     capturedDescriptor.value = data.descriptor;
     faceCaptured.value = true;
-    if (!form.value.age && data.age) form.value.age = data.age;
-    if (form.value.gender === 'other' && data.gender) form.value.gender = data.gender;
+    // Only auto-fill if the user hasn't touched these fields
+    if (!form.value.age) form.value.age = data.age;
+    if (form.value.gender === 'other') form.value.gender = data.gender;
   }
 };
 
