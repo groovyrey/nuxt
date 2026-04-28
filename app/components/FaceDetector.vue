@@ -88,7 +88,7 @@ const handleVideoPlay = () => {
 
     // Staggered heavy inferences (every 6th frame ~ 5 times per second)
     const detections = frameCount % 6 === 0 
-      ? await task.withFaceLandmarks().withFaceExpressions().withAgeAndGender()
+      ? await task.withFaceLandmarks().withFaceDescriptor().withFaceExpressions().withAgeAndGender()
       : await task;
 
     if (detections.length > 0) {
@@ -110,7 +110,8 @@ const handleVideoPlay = () => {
             age: Math.round(best.age),
             gender: best.gender,
             genderProbability: Math.round(best.genderProbability * 100),
-            expression: expression
+            expression: expression,
+            descriptor: Array.from(best.descriptor)
           });
         }
       }
@@ -289,6 +290,7 @@ video {
   width: 100%;
   border-radius: 4px;
   filter: grayscale(0.2) contrast(1.1);
+  transform: scaleX(-1);
 }
 
 canvas {
@@ -297,6 +299,7 @@ canvas {
   left: 0;
   width: 100%;
   height: 100%;
+  transform: scaleX(-1);
 }
 
 .scanning-line {

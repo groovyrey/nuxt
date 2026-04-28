@@ -11,9 +11,17 @@
   },
   "dependencies": {
     "@vladmandic/face-api": "^1.7.15",
+    "bcryptjs": "^3.0.3",
     "mysql2": "^3.22.3",
     "nuxt": "^4.4.2",
+    "uuid": "^14.0.0",
     "vue": "^3.5.33",
     "vue-router": "^5.0.6"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/uuid": "^10.0.0",
+    "dotenv": "^17.4.2",
+    "tsx": "^4.21.0"
   }
 }
