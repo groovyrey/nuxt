@@ -55,57 +55,76 @@ const handleVideoPlay = () => {
 
   const updateDimensions = () => {
     if (!videoRef.value || !canvasRef.value) return;
-    const displaySize = {
+    const size = {
       width: videoRef.value.offsetWidth,
       height: videoRef.value.offsetHeight,
     };
-    faceapi.matchDimensions(canvasRef.value, displaySize);
-    return displaySize;
+    faceapi.matchDimensions(canvasRef.value, size);
+    return size;
   };
 
+  let isDetecting = false;
+  let frameCount = 0;
   let displaySize = updateDimensions();
-  window.addEventListener('resize', () => { displaySize = updateDimensions(); });
 
-  detectionInterval = window.setInterval(async () => {
-    if (!videoRef.value || !canvasRef.value || !isCameraStarted.value) return;
+  const detect = async () => {
+    if (!videoRef.value || !canvasRef.value || !isCameraStarted.value || isDetecting) {
+      requestAnimationFrame(detect);
+      return;
+    }
+
+    isDetecting = true;
+    frameCount++;
 
     if (videoRef.value.offsetWidth !== displaySize?.width) {
       displaySize = updateDimensions();
     }
 
-    const detections = await faceapi
-      .detectAllFaces(videoRef.value, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
-      .withFaceLandmarks()
-      .withFaceExpressions()
-      .withAgeAndGender();
+    // High-frequency face tracking
+    const task = faceapi.detectAllFaces(
+      videoRef.value, 
+      new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 })
+    );
 
-    const resizedDetections = faceapi.resizeResults(detections, displaySize!);
-    const ctx = canvasRef.value.getContext('2d');
-    
-    // Emit the most prominent face data to parent
+    // Staggered heavy inferences (every 6th frame ~ 5 times per second)
+    const detections = frameCount % 6 === 0 
+      ? await task.withFaceLandmarks().withFaceExpressions().withAgeAndGender()
+      : await task;
+
     if (detections.length > 0) {
-      const best = detections[0];
-      const expression = Object.entries(best.expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
-      emit('detected', {
-        age: Math.round(best.age),
-        gender: best.gender,
-        genderProbability: Math.round(best.genderProbability * 100),
-        expression: expression
-      });
-    } else {
-      emit('detected', null);
-    }
-    if (ctx) {
-      ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
+      const resizedDetections = faceapi.resizeResults(detections, displaySize!);
+      const ctx = canvasRef.value.getContext('2d', { alpha: true });
       
-      if (detections.length > 0) {
-        // Custom drawing colors for dark theme
+      if (ctx) {
+        ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
         faceapi.draw.drawDetections(canvasRef.value, resizedDetections);
-        faceapi.draw.drawFaceLandmarks(canvasRef.value, resizedDetections);
-        faceapi.draw.drawFaceExpressions(canvasRef.value, resizedDetections);
+        
+        // Only draw complex features when they were actually detected in this frame
+        if ('landmarks' in detections[0]) {
+          faceapi.draw.drawFaceLandmarks(canvasRef.value, resizedDetections);
+          faceapi.draw.drawFaceExpressions(canvasRef.value, resizedDetections);
+          
+          const best = detections[0] as any;
+          const expression = Object.entries(best.expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
+          emit('detected', {
+            age: Math.round(best.age),
+            gender: best.gender,
+            genderProbability: Math.round(best.genderProbability * 100),
+            expression: expression
+          });
+        }
       }
+    } else {
+      if (frameCount % 10 === 0) emit('detected', null);
+      const ctx = canvasRef.value.getContext('2d');
+      ctx?.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
     }
-  }, 100);
+
+    isDetecting = false;
+    requestAnimationFrame(detect);
+  };
+
+  detect();
 };
 
 onMounted(async () => {
