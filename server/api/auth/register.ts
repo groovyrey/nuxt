@@ -45,12 +45,16 @@ export default defineEventHandler(async (event) => {
 
     return { success: true, username };
   } catch (error: any) {
+    if (error.statusCode) throw error;
+
     if (error.code === 'ER_DUP_ENTRY') {
       throw createError({
         statusCode: 409,
         statusMessage: 'Username or email already exists',
       });
     }
+    
+    console.error('Registration error:', error);
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error',

@@ -49,10 +49,6 @@
               <label><UserIcon :size="10" /> GENDER</label>
               <span>{{ user.gender?.toUpperCase() || 'NOT RECORDED' }}</span>
             </div>
-            <div class="detail-item">
-              <label><ZapIcon :size="10" /> CLEARANCE LEVEL</label>
-              <span class="accent">LEVEL 4 OPERATOR</span>
-            </div>
           </div>
         </div>
       </div>
@@ -100,7 +96,6 @@ import {
   ShieldCheck as ShieldCheckIcon,
   Fingerprint as FingerprintIcon,
   Calendar as CalendarIcon,
-  Zap as ZapIcon,
   Lock as LockIcon,
   Activity as ActivityIcon,
   Cpu as CpuIcon,
