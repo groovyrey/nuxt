@@ -6,8 +6,14 @@
         <h1>NEURAL<span class="accent">VISION</span></h1>
       </div>
       <div class="user-controls">
-        <span class="username">{{ user.username }}</span>
-        <button @click="logout" class="logout-btn">LOGOUT</button>
+        <span class="username-wrapper">
+          <UserIcon :size="14" class="icon-dim" />
+          <span class="username">{{ user.username }}</span>
+        </span>
+        <button @click="logout" class="logout-btn">
+          <LogOutIcon :size="14" />
+          <span>LOGOUT</span>
+        </button>
       </div>
     </header>
     
@@ -17,28 +23,34 @@
           <div class="profile-header">
             <div class="avatar-placeholder">
               <span class="initials">{{ user.username.charAt(0).toUpperCase() }}</span>
+              <div class="avatar-overlay">
+                <ShieldCheckIcon :size="32" color="black" />
+              </div>
             </div>
             <div class="profile-info">
               <h2>{{ user.username }}</h2>
-              <p class="email">{{ user.email }}</p>
+              <p class="email">
+                <MailIcon :size="12" class="inline-icon" />
+                {{ user.email }}
+              </p>
             </div>
           </div>
           
           <div class="profile-details">
             <div class="detail-item">
-              <label>BIO-METRIC ID</label>
+              <label><FingerprintIcon :size="10" /> BIO-METRIC ID</label>
               <span>{{ user.username.toUpperCase() }}-NX-{{ Math.floor(Math.random() * 10000) }}</span>
             </div>
             <div class="detail-item">
-              <label>AGE</label>
+              <label><CalendarIcon :size="10" /> AGE</label>
               <span>{{ user.age || 'NOT RECORDED' }} YEARS</span>
             </div>
             <div class="detail-item">
-              <label>GENDER</label>
+              <label><UserIcon :size="10" /> GENDER</label>
               <span>{{ user.gender?.toUpperCase() || 'NOT RECORDED' }}</span>
             </div>
             <div class="detail-item">
-              <label>CLEARANCE LEVEL</label>
+              <label><ZapIcon :size="10" /> CLEARANCE LEVEL</label>
               <span class="accent">LEVEL 4 OPERATOR</span>
             </div>
           </div>
@@ -47,17 +59,17 @@
 
       <div class="info-sidebar">
         <div class="status-item highlight">
-          <label>ACCESS STATUS</label>
+          <label><LockIcon :size="10" /> ACCESS STATUS</label>
           <span class="value">AUTHORIZED</span>
         </div>
         
         <div class="status-item">
-          <label>SYSTEM STATUS</label>
+          <label><ActivityIcon :size="10" /> SYSTEM STATUS</label>
           <span class="value">OPERATIONAL</span>
         </div>
 
         <div class="status-item">
-          <label>NETWORK</label>
+          <label><CpuIcon :size="10" /> NETWORK</label>
           <span class="value">ENCRYPTED GRID</span>
         </div>
       </div>
@@ -65,15 +77,37 @@
 
     <footer class="system-footer">
       <div class="footer-line"></div>
-      <p>&copy; 2024 NEURAL VISION SYSTEM • SECURE ACCESS ONLY</p>
+      <div class="footer-content">
+        <p>&copy; 2024 NEURAL VISION SYSTEM • SECURE ACCESS ONLY</p>
+        <div class="footer-icons">
+          <GithubIcon :size="16" />
+          <TwitterIcon :size="16" />
+        </div>
+      </div>
     </footer>
   </div>
   <div v-else-if="!isLoading" class="redirecting">
-    Redirecting to login...
+    <div class="spinner"></div>
+    <span>Redirecting to login...</span>
   </div>
 </template>
 
 <script setup>
+import { 
+  User as UserIcon, 
+  LogOut as LogOutIcon, 
+  Mail as MailIcon, 
+  ShieldCheck as ShieldCheckIcon,
+  Fingerprint as FingerprintIcon,
+  Calendar as CalendarIcon,
+  Zap as ZapIcon,
+  Lock as LockIcon,
+  Activity as ActivityIcon,
+  Cpu as CpuIcon,
+  Github as GithubIcon,
+  Twitter as TwitterIcon
+} from 'lucide-vue-next';
+
 const { user, isLoading, logout } = useAuth();
 const isOnline = ref(true)
 
@@ -88,91 +122,123 @@ watch(isLoading, (loading) => {
 .app-container {
   display: flex;
   flex-direction: column;
-  padding: 2rem;
+  padding: 1.5rem;
   max-width: 1200px;
   margin: 0 auto;
+  min-height: 100vh;
 }
 
 .user-profile-display {
   width: 100%;
-  max-width: 600px;
 }
 
 .profile-header {
   display: flex;
   align-items: center;
-  gap: 2rem;
-  margin-bottom: 3rem;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
   padding-bottom: 2rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .avatar-placeholder {
-  width: 100px;
-  height: 100px;
+  position: relative;
+  width: 80px;
+  height: 80px;
+  min-width: 80px;
   background: linear-gradient(135deg, var(--accent-green), #00aadd);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.2);
+}
+
+.avatar-overlay {
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  background: var(--accent-green);
+  border-radius: 50%;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--card-black);
 }
 
 .initials {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 800;
   color: #000;
 }
 
 .profile-info h2 {
   margin: 0;
-  font-size: 2rem;
+  font-size: 1.75rem;
   letter-spacing: -0.02em;
 }
 
 .profile-info .email {
   color: var(--text-dim);
   margin: 4px 0 0;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.inline-icon {
+  opacity: 0.6;
 }
 
 .profile-details {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
 }
 
 .detail-item {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .detail-item label {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--text-dim);
   font-weight: 700;
   letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .detail-item span {
   font-family: monospace;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  word-break: break-all;
 }
 
 .glass-header {
-  padding: 2rem 0;
+  padding: 1.5rem 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .logo-area {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .status-dot {
@@ -188,7 +254,7 @@ watch(isLoading, (loading) => {
 }
 
 h1 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 800;
   margin: 0;
   letter-spacing: 0.1em;
@@ -199,12 +265,20 @@ h1 {
 .user-controls {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
+
+.username-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-dim { opacity: 0.5; }
 
 .username {
   color: var(--text-dim);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.05em;
 }
@@ -213,36 +287,38 @@ h1 {
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-size: 0.7rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.65rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .logout-btn:hover {
-  border-color: var(--accent-green);
-  color: var(--accent-green);
+  border-color: #ff4444;
+  color: #ff4444;
+  background: rgba(255, 68, 68, 0.05);
 }
 
 .content-grid {
   display: grid;
   grid-template-columns: 1fr 280px;
-  gap: 2rem;
+  gap: 1.5rem;
   flex: 1;
 }
 
 .vision-card {
   background: var(--card-black);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 24px;
-  padding: 1.5rem;
+  border-radius: 20px;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 500px;
+  min-height: 400px;
   position: relative;
   overflow: hidden;
 }
@@ -250,33 +326,27 @@ h1 {
 .info-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-}
-
-.biometrics {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  border-left: 2px solid var(--accent-green);
-  padding-left: 1rem;
-  margin-bottom: 1rem;
+  gap: 0.75rem;
 }
 
 .status-item {
   background: var(--card-black);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 1.2rem;
-  border-radius: 16px;
+  padding: 1rem;
+  border-radius: 12px;
   transition: all 0.3s ease;
 }
 
 .status-item.highlight {
   border-color: var(--accent-green);
+  background: rgba(0, 255, 136, 0.02);
 }
 
 .status-item label {
-  display: block;
-  font-size: 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.6rem;
   color: var(--text-dim);
   margin-bottom: 4px;
   font-weight: 600;
@@ -284,30 +354,47 @@ h1 {
 
 .status-item .value {
   font-family: monospace;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #fff;
 }
 
-.scanning {
-  color: var(--accent-green) !important;
-  animation: blink 1s infinite;
+.system-footer {
+  margin-top: 3rem;
+  padding-bottom: 1.5rem;
 }
 
-@keyframes blink {
-  50% { opacity: 0.3; }
-}
-
-.loading-state {
+.footer-content {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   gap: 1rem;
-  color: var(--text-dim);
+}
+
+.footer-line {
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent-green), transparent);
+  margin-bottom: 1rem;
+  opacity: 0.2;
+}
+
+.system-footer p {
+  color: #444;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.footer-icons {
+  display: flex;
+  gap: 1rem;
+  color: #444;
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
+  width: 24px;
+  height: 24px;
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-top-color: var(--accent-green);
   border-radius: 50%;
@@ -318,35 +405,37 @@ h1 {
   to { transform: rotate(360deg); }
 }
 
-.system-footer {
-  margin-top: 4rem;
-  padding-bottom: 2rem;
-}
-
-.footer-line {
-  height: 1px;
-  background: linear-gradient(90deg, var(--accent-green), transparent);
-  margin-bottom: 1.5rem;
-  opacity: 0.3;
-}
-
-.system-footer p {
-  color: #444;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-}
-
 .redirecting {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 1rem;
   height: 100vh;
   color: var(--text-dim);
+  font-size: 0.8rem;
 }
 
 @media (max-width: 900px) {
   .content-grid { grid-template-columns: 1fr; }
-  .info-sidebar { order: 2; }
+  .info-sidebar { 
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-container { padding: 1rem; }
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  .profile-info .email { justify-content: center; }
+  .logo-area h1 { font-size: 1.1rem; }
+  .user-controls { width: 100%; justify-content: space-between; }
+  .vision-card { padding: 1.5rem; }
+  .profile-details { grid-template-columns: 1fr; }
 }
 </style>

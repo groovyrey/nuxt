@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import * as faceapi from '@vladmandic/face-api';
 import { ref, onMounted, onUnmounted } from 'vue';
+import { 
+  AlertTriangle as AlertTriangleIcon, 
+  Camera as CameraIcon, 
+  Scan as ScanIcon,
+  Loader2 as Loader2Icon
+} from 'lucide-vue-next';
 
 const videoRef = ref<HTMLVideoElement | null>(null);
 const canvasRef = ref<HTMLCanvasElement | null>(null);
@@ -155,17 +161,26 @@ onUnmounted(() => {
 <template>
   <div class="face-detector-container">
     <div v-if="error" class="error-toast">
-      <span class="warning-icon">⚠</span>
-      {{ error }}
+      <AlertTriangleIcon :size="18" />
+      <span>{{ error }}</span>
     </div>
     
-    <div v-if="!isCameraStarted && !isLoading" class="setup-screen">
+    <div v-if="isLoading" class="setup-screen">
+      <Loader2Icon class="spin accent" :size="48" />
+      <p class="hint">LOADING NEURAL ENGINE...</p>
+    </div>
+
+    <div v-else-if="!isCameraStarted" class="setup-screen">
       <div class="scanner-rings">
         <div class="ring"></div>
         <div class="ring"></div>
+        <div class="center-icon">
+          <CameraIcon :size="32" class="accent" />
+        </div>
       </div>
       <button @click="startVideo" class="start-btn">
-        INITIALIZE SCANNER
+        <ScanIcon :size="18" />
+        <span>INITIALIZE SCANNER</span>
       </button>
       <p class="hint">Biometric authentication required</p>
     </div>
@@ -198,6 +213,8 @@ onUnmounted(() => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  position: relative;
+  background: #000;
 }
 
 .error-toast {
@@ -205,15 +222,17 @@ onUnmounted(() => {
   top: 1rem;
   background: #ff0044;
   color: white;
-  padding: 0.8rem 1.5rem;
+  padding: 0.8rem 1.2rem;
   border-radius: 8px;
   font-weight: 600;
-  font-size: 0.8rem;
-  z-index: 10;
+  font-size: 0.75rem;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 10px;
   animation: slideDown 0.3s ease;
+  width: 90%;
+  box-sizing: border-box;
 }
 
 @keyframes slideDown {
@@ -223,19 +242,32 @@ onUnmounted(() => {
 
 .setup-screen {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem;
 }
 
 .scanner-rings {
   position: relative;
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 2rem;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.center-icon {
+  z-index: 2;
+  opacity: 0.8;
 }
 
 .ring {
   position: absolute;
   inset: 0;
-  border: 2px solid #00ff8833;
+  border: 2px solid var(--accent-green);
+  opacity: 0.2;
   border-radius: 50%;
   animation: pulse 2s infinite;
 }
@@ -245,60 +277,67 @@ onUnmounted(() => {
 }
 
 @keyframes pulse {
-  0% { transform: scale(0.8); opacity: 0.8; }
+  0% { transform: scale(0.8); opacity: 0.5; }
   100% { transform: scale(1.5); opacity: 0; }
 }
 
 .start-btn {
   background: transparent;
-  color: #00ff88;
-  border: 1px solid #00ff88;
-  padding: 1rem 2.5rem;
-  font-size: 0.9rem;
+  color: var(--accent-green);
+  border: 1px solid var(--accent-green);
+  padding: 0.8rem 1.5rem;
+  font-size: 0.8rem;
   font-weight: 800;
-  letter-spacing: 0.2em;
-  border-radius: 4px;
+  letter-spacing: 0.15em;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .start-btn:hover {
-  background: #00ff88;
+  background: var(--accent-green);
   color: #000;
-  box-shadow: 0 0 30px #00ff8866;
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
 }
 
 .hint {
   color: #444;
-  font-size: 0.7rem;
-  margin-top: 1.5rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  margin: 0;
 }
 
 .video-container {
   position: relative;
   width: 100%;
-  max-width: 640px;
+  height: 100%;
   line-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .corner {
   position: absolute;
-  width: 20px;
-  height: 20px;
-  border: 2px solid #00ff88;
-  z-index: 5;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--accent-green);
+  z-index: 10;
 }
 
-.tl { top: -10px; left: -10px; border-right: none; border-bottom: none; }
-.tr { top: -10px; right: -10px; border-left: none; border-bottom: none; }
-.bl { bottom: -10px; left: -10px; border-right: none; border-top: none; }
-.br { bottom: -10px; right: -10px; border-left: none; border-top: none; }
+.tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+.tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+.bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+.br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
 
 video {
   width: 100%;
-  border-radius: 4px;
+  height: 100%;
+  object-fit: cover;
   filter: grayscale(0.2) contrast(1.1);
   transform: scaleX(-1);
 }
@@ -310,6 +349,7 @@ canvas {
   width: 100%;
   height: 100%;
   transform: scaleX(-1);
+  pointer-events: none;
 }
 
 .scanning-line {
@@ -318,14 +358,25 @@ canvas {
   left: 0;
   width: 100%;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #00ff88, transparent);
+  background: linear-gradient(90deg, transparent, var(--accent-green), transparent);
   animation: scan 3s linear infinite;
-  z-index: 4;
-  box-shadow: 0 0 15px #00ff88;
+  z-index: 5;
+  box-shadow: 0 0 15px var(--accent-green);
 }
 
 @keyframes scan {
   0% { top: 0%; }
   100% { top: 100%; }
 }
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.accent { color: var(--accent-green); }
 </style>

@@ -2,6 +2,9 @@
   <div class="auth-container">
     <div class="auth-card">
       <header class="auth-header">
+        <div class="auth-logo">
+          <UserPlusIcon :size="40" class="accent" />
+        </div>
         <h1>NEURAL<span class="accent">REGISTRY</span></h1>
         <p class="subtitle">Create New Biometric Profile</p>
       </header>
@@ -12,32 +15,41 @@
             <ClientOnly>
               <FaceDetector ref="detectorRef" @detected="handleDetection" />
             </ClientOnly>
-            <div v-if="faceCaptured" class="capture-badge">FACE CAPTURED</div>
-            <div v-else class="capture-badge scanning">SCANNING...</div>
+            <div v-if="faceCaptured" class="capture-badge">
+              <CheckCircleIcon :size="12" />
+              <span>FACE CAPTURED</span>
+            </div>
+            <div v-else class="capture-badge scanning">
+              <Loader2Icon :size="12" class="spin" />
+              <span>SCANNING...</span>
+            </div>
+          </div>
+          <div class="scanner-info">
+            <p><InfoIcon :size="12" /> Biometric data will be encrypted and stored securely.</p>
           </div>
         </div>
 
         <form @submit.prevent="handleRegister" class="auth-form">
           <div class="form-group">
-            <label>USERNAME</label>
+            <label><UserIcon :size="10" /> USERNAME</label>
             <input v-model="form.username" type="text" placeholder="Identity Handle" required />
           </div>
           <div class="form-group">
-            <label>EMAIL</label>
+            <label><MailIcon :size="10" /> EMAIL</label>
             <input v-model="form.email" type="email" placeholder="comm-link@network.sys" required />
           </div>
           <div class="form-group">
-            <label>PASSWORD</label>
+            <label><LockIcon :size="10" /> PASSWORD</label>
             <input v-model="form.password" type="password" placeholder="••••••••" required />
           </div>
           
           <div class="form-row">
             <div class="form-group half">
-              <label>AGE</label>
+              <label><CalendarIcon :size="10" /> AGE</label>
               <input v-model.number="form.age" type="number" placeholder="24" />
             </div>
             <div class="form-group half">
-              <label>GENDER</label>
+              <label><UsersIcon :size="10" /> GENDER</label>
               <select v-model="form.gender">
                 <option value="male">MALE</option>
                 <option value="female">FEMALE</option>
@@ -46,10 +58,14 @@
             </div>
           </div>
 
-          <div v-if="error" class="error-msg">{{ error }}</div>
+          <div v-if="error" class="error-msg">
+            <AlertCircleIcon :size="14" />
+            <span>{{ error }}</span>
+          </div>
 
           <button type="submit" class="submit-btn" :disabled="loading">
-            {{ loading ? 'PROCESSING...' : 'INITIALIZE PROFILE' }}
+            <Loader2Icon v-if="loading" class="spin" :size="18" />
+            <span>{{ loading ? 'PROCESSING...' : 'INITIALIZE PROFILE' }}</span>
           </button>
 
           <p class="auth-link">
@@ -62,6 +78,19 @@
 </template>
 
 <script setup>
+import { 
+  UserPlus as UserPlusIcon,
+  CheckCircle as CheckCircleIcon,
+  Loader2 as Loader2Icon,
+  Info as InfoIcon,
+  User as UserIcon,
+  Mail as MailIcon,
+  Lock as LockIcon,
+  Calendar as CalendarIcon,
+  Users as UsersIcon,
+  AlertCircle as AlertCircleIcon
+} from 'lucide-vue-next';
+
 const { fetchUser } = useAuth();
 const detectorRef = ref(null);
 const loading = ref(false);
@@ -83,12 +112,10 @@ const handleDetection = (data) => {
     capturedDescriptor.value = data.descriptor;
     faceCaptured.value = true;
     
-    // Stop camera to reduce lag after capture
     if (detectorRef.value) {
       detectorRef.value.stopCamera();
     }
 
-    // Only auto-fill if the user hasn't touched these fields
     if (!form.value.age) form.value.age = data.age;
     if (form.value.gender === 'other') form.value.gender = data.gender;
   }
@@ -130,7 +157,7 @@ const handleRegister = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 1.5rem;
   background: var(--bg-black);
 }
 
@@ -139,24 +166,39 @@ const handleRegister = async () => {
   max-width: 900px;
   background: var(--card-black);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 32px;
-  padding: 3rem;
+  border-radius: 24px;
+  padding: 2.5rem;
   box-shadow: 0 40px 100px rgba(0,0,0,0.5);
 }
 
 .auth-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 2.5rem;
+}
+
+.auth-logo {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.subtitle {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  letter-spacing: 0.05em;
 }
 
 .auth-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 3rem;
+  gap: 2.5rem;
 }
 
 .scanner-section {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .face-preview {
@@ -177,24 +219,37 @@ const handleRegister = async () => {
   font-size: 0.6rem;
   font-weight: 800;
   padding: 0.4rem 0.8rem;
-  border-radius: 4px;
+  border-radius: 6px;
   letter-spacing: 0.1em;
   z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .capture-badge.scanning {
   background: #ffaa00;
-  animation: blink 1s infinite;
 }
 
-@keyframes blink {
-  50% { opacity: 0.5; }
+.scanner-info {
+  font-size: 0.65rem;
+  color: #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scanner-info p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
 }
 
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .form-group {
@@ -211,20 +266,25 @@ const handleRegister = async () => {
 .half { flex: 1; }
 
 label {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--text-dim);
   font-weight: 700;
   letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 input, select {
+  width: 100%;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 1rem;
-  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
   color: #fff;
   font-size: 0.9rem;
   transition: all 0.3s;
+  box-sizing: border-box;
 }
 
 input:focus, select:focus {
@@ -233,43 +293,59 @@ input:focus, select:focus {
   background: rgba(255, 255, 255, 0.05);
 }
 
+select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+}
+
 .submit-btn {
   background: var(--accent-green);
   color: #000;
   border: none;
-  padding: 1.2rem;
-  border-radius: 12px;
+  padding: 1rem;
+  border-radius: 10px;
   font-weight: 800;
   letter-spacing: 0.1em;
   cursor: pointer;
-  margin-top: 1rem;
+  margin-top: 0.5rem;
   transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 .submit-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
 .submit-btn:not(:disabled):hover {
   box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .error-msg {
   color: #ff4444;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-align: center;
-  background: rgba(255, 68, 68, 0.1);
-  padding: 0.8rem;
+  background: rgba(255, 68, 68, 0.08);
+  padding: 0.75rem;
   border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .auth-link {
   text-align: center;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--text-dim);
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 
 .auth-link a {
@@ -278,8 +354,31 @@ input:focus, select:focus {
   font-weight: 700;
 }
 
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 @media (max-width: 800px) {
   .auth-content { grid-template-columns: 1fr; }
-  .auth-card { padding: 2rem; }
+  .auth-card { padding: 2rem; max-width: 500px; }
+  .face-preview { max-width: 300px; margin: 0 auto; }
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 1.5rem;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+  .auth-container {
+    padding: 0;
+  }
 }
 </style>
