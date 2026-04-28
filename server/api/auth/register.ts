@@ -1,5 +1,5 @@
 import { useDb } from '../../utils/db';
-import { hashPassword, createSession } from '../../utils/auth';
+import { hashPassword, createSession, findMatchingUserByFace } from '../../utils/auth';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -15,6 +15,17 @@ export default defineEventHandler(async (event) => {
   const db = useDb();
   
   try {
+    // Check if face is already registered
+    if (faceDescriptor && Array.isArray(faceDescriptor)) {
+      const existingUser = await findMatchingUserByFace(faceDescriptor);
+      if (existingUser) {
+        throw createError({
+          statusCode: 409,
+          statusMessage: 'This biometric profile is already registered to another account',
+        });
+      }
+    }
+
     const hashed = await hashPassword(password);
     
     await db.execute(

@@ -1,16 +1,5 @@
 import { useDb } from '../../utils/db';
-import { createSession } from '../../utils/auth';
-
-const EUCLIDEAN_THRESHOLD = 0.6;
-
-function euclideanDistance(arr1: number[], arr2: number[]) {
-  if (arr1.length !== arr2.length) return Infinity;
-  let sum = 0;
-  for (let i = 0; i < arr1.length; i++) {
-    sum += Math.pow(arr1[i] - arr2[i], 2);
-  }
-  return Math.sqrt(sum);
-}
+import { createSession, findMatchingUserByFace } from '../../utils/auth';
 
 export default defineEventHandler(async (event) => {
   try {
@@ -24,36 +13,7 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const db = useDb();
-    const [rows] = await db.execute('SELECT username, face_descriptor FROM users WHERE face_descriptor IS NOT NULL');
-    const users = rows as any[];
-
-    let matchedUser = null;
-    let minDistance = Infinity;
-
-    for (const user of users) {
-      try {
-        let storedDescriptor;
-        // mysql2 might return JSON columns as strings or already-parsed objects
-        if (typeof user.face_descriptor === 'string') {
-          storedDescriptor = JSON.parse(user.face_descriptor);
-        } else {
-          storedDescriptor = user.face_descriptor;
-        }
-
-        if (!Array.isArray(storedDescriptor)) continue;
-
-        const distance = euclideanDistance(faceDescriptor, storedDescriptor);
-        
-        if (distance < minDistance && distance < EUCLIDEAN_THRESHOLD) {
-          minDistance = distance;
-          matchedUser = user;
-        }
-      } catch (parseError) {
-        console.error(`Error parsing descriptor for user ${user.username}:`, parseError);
-        continue;
-      }
-    }
+    const matchedUser = await findMatchingUserByFace(faceDescriptor);
 
     if (!matchedUser) {
       throw createError({
