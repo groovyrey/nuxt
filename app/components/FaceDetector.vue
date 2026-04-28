@@ -80,11 +80,12 @@ const handleVideoPlay = () => {
       .withAgeAndGender();
 
     const resizedDetections = faceapi.resizeResults(detections, displaySize!);
+    const ctx = canvasRef.value.getContext('2d');
     
     // Emit the most prominent face data to parent
     if (detections.length > 0) {
       const best = detections[0];
-      const expression = Object.entries(best.expressions).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+      const expression = Object.entries(best.expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
       emit('detected', {
         age: Math.round(best.age),
         gender: best.gender,
