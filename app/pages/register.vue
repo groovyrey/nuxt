@@ -13,6 +13,7 @@
               <FaceDetector @detected="handleDetection" />
             </ClientOnly>
             <div v-if="faceCaptured" class="capture-badge">FACE CAPTURED</div>
+            <div v-else class="capture-badge scanning">SCANNING...</div>
           </div>
         </div>
 
@@ -172,6 +173,15 @@ const handleRegister = async () => {
   border-radius: 4px;
   letter-spacing: 0.1em;
   z-index: 10;
+}
+
+.capture-badge.scanning {
+  background: #ffaa00;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.5; }
 }
 
 .auth-form {

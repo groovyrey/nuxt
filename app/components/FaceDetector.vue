@@ -81,35 +81,35 @@ const handleVideoPlay = () => {
         displaySize = updateDimensions();
       }
 
-      // High-frequency face tracking
+      // Increased input size for better recognition accuracy
       const task = faceapi.detectAllFaces(
         videoRef.value, 
-        new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 })
+        new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 })
       );
 
-      // Staggered heavy inferences (every 6th frame ~ 5 times per second)
-      const detections = frameCount % 6 === 0 
+      // Increase heavy inference frequency to every 3rd frame
+      const detections = frameCount % 3 === 0 
         ? await task.withFaceLandmarks().withFaceDescriptor().withFaceExpressions().withAgeAndGender()
         : await task;
 
       if (detections && detections.length > 0) {
         const resizedDetections = faceapi.resizeResults(detections, displaySize!);
         const ctx = canvasRef.value.getContext('2d', { alpha: true });
-        
+
         if (ctx) {
           ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
           faceapi.draw.drawDetections(canvasRef.value, resizedDetections);
-          
-          // Only draw complex features when they were actually detected in this frame
-          if (detections[0] && 'landmarks' in detections[0]) {
+
+          // Detailed check for face recognition data
+          const best = detections[0] as any;
+          if (best && 'landmarks' in best) {
             faceapi.draw.drawFaceLandmarks(canvasRef.value, resizedDetections);
             faceapi.draw.drawFaceExpressions(canvasRef.value, resizedDetections);
-            
-            const best = detections[0] as any;
+
             const expression = Object.entries(best.expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
-            
+
             if (best.descriptor) {
-              console.log('Emitting descriptor for biometric profile');
+              console.log('BIOMETRIC SUCCESS: Descriptor generated');
               emit('detected', {
                 age: Math.round(best.age),
                 gender: best.gender,
@@ -117,11 +117,12 @@ const handleVideoPlay = () => {
                 expression: expression,
                 descriptor: Array.from(best.descriptor)
               });
+            } else {
+              console.warn('BIOMETRIC WARNING: Landmarks found but descriptor missing');
             }
           }
         }
-      } else {
-        if (frameCount % 10 === 0) emit('detected', null);
+      } else {        if (frameCount % 10 === 0) emit('detected', null);
         const ctx = canvasRef.value.getContext('2d');
         ctx?.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
       }
