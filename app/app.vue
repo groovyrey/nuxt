@@ -11,7 +11,7 @@
     <main class="content-grid">
       <div class="vision-card">
         <ClientOnly>
-          <FaceDetector />
+          <FaceDetector @detected="handleDetection" />
           <template #fallback>
             <div class="loading-state">
               <div class="spinner"></div>
@@ -22,17 +22,31 @@
       </div>
 
       <div class="info-sidebar">
+        <div class="status-item highlight">
+          <label>ANALYSIS</label>
+          <span class="value" :class="{ 'scanning': !currentDetection }">
+            {{ currentDetection ? 'TARGET IDENTIFIED' : 'SCANNING...' }}
+          </span>
+        </div>
+        
+        <div class="biometrics" v-if="currentDetection">
+          <div class="status-item">
+            <label>AGE EST.</label>
+            <span class="value">{{ currentDetection.age }} YEARS</span>
+          </div>
+          <div class="status-item">
+            <label>GENDER</label>
+            <span class="value">{{ currentDetection.gender.toUpperCase() }} ({{ currentDetection.genderProbability }}%)</span>
+          </div>
+          <div class="status-item">
+            <label>MOOD</label>
+            <span class="value text-uppercase">{{ currentDetection.expression }}</span>
+          </div>
+        </div>
+
         <div class="status-item">
           <label>SYSTEM STATUS</label>
           <span class="value">OPERATIONAL</span>
-        </div>
-        <div class="status-item">
-          <label>ENGINE</label>
-          <span class="value">FACE-API.JS v1.7</span>
-        </div>
-        <div class="status-item">
-          <label>MODEL PATH</label>
-          <span class="value text-xs">/public/models</span>
         </div>
       </div>
     </main>
@@ -46,6 +60,11 @@
 
 <script setup>
 const isOnline = ref(true)
+const currentDetection = ref(null)
+
+const handleDetection = (data) => {
+  currentDetection.value = data
+}
 </script>
 
 <style>
@@ -145,11 +164,25 @@ h1 {
   gap: 1rem;
 }
 
+.biometrics {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border-left: 2px solid var(--accent-green);
+  padding-left: 1rem;
+  margin-bottom: 1rem;
+}
+
 .status-item {
   background: var(--card-black);
   border: 1px solid rgba(255, 255, 255, 0.05);
   padding: 1.2rem;
   border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.status-item.highlight {
+  border-color: var(--accent-green);
 }
 
 .status-item label {
@@ -165,6 +198,17 @@ h1 {
   font-size: 0.9rem;
   color: #fff;
 }
+
+.scanning {
+  color: var(--accent-green) !important;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.3; }
+}
+
+.text-uppercase { text-transform: uppercase; }
 
 .loading-state {
   display: flex;

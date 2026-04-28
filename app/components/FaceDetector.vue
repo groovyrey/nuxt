@@ -10,6 +10,8 @@ const isCameraStarted = ref(false);
 
 let detectionInterval: number | null = null;
 
+const emit = defineEmits(['detected']);
+
 const loadModels = async () => {
   try {
     const MODEL_URL = window.location.origin + '/models';
@@ -19,6 +21,7 @@ const loadModels = async () => {
     await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
     await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
     await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+    await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
     
     console.log('All models loaded successfully');
   } catch (err: any) {
@@ -73,11 +76,24 @@ const handleVideoPlay = () => {
     const detections = await faceapi
       .detectAllFaces(videoRef.value, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
       .withFaceLandmarks()
-      .withFaceExpressions();
+      .withFaceExpressions()
+      .withAgeAndGender();
 
     const resizedDetections = faceapi.resizeResults(detections, displaySize!);
     
-    const ctx = canvasRef.value.getContext('2d');
+    // Emit the most prominent face data to parent
+    if (detections.length > 0) {
+      const best = detections[0];
+      const expression = Object.entries(best.expressions).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+      emit('detected', {
+        age: Math.round(best.age),
+        gender: best.gender,
+        genderProbability: Math.round(best.genderProbability * 100),
+        expression: expression
+      });
+    } else {
+      emit('detected', null);
+    }
     if (ctx) {
       ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
       
