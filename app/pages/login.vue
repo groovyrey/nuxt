@@ -40,7 +40,7 @@
         <div v-else class="face-auth-section">
           <div class="face-scanner-wrapper">
             <ClientOnly>
-              <FaceDetector @detected="handleFaceDetection" />
+              <FaceDetector ref="detectorRef" @detected="handleFaceDetection" />
             </ClientOnly>
             <div class="scan-overlay">
               <div class="scan-line"></div>
@@ -60,6 +60,7 @@
 
 <script setup>
 const { fetchUser } = useAuth();
+const detectorRef = ref(null);
 const authMode = ref('password');
 const loading = ref(false);
 const error = ref('');
@@ -95,6 +96,12 @@ const handleFaceDetection = async (data) => {
         method: 'POST',
         body: { faceDescriptor: data.descriptor }
       });
+      
+      // Stop camera immediately on success to eliminate transition lag
+      if (detectorRef.value) {
+        detectorRef.value.stopCamera();
+      }
+
       await fetchUser();
       navigateTo('/');
     } catch (err) {
