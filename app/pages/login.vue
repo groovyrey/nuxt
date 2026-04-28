@@ -9,26 +9,27 @@
         <p class="subtitle">System Authentication Required</p>
       </header>
 
-      <div class="auth-tabs">
-        <button 
-          :class="{ active: authMode === 'password' }" 
-          @click="authMode = 'password'"
-        >
-          <KeyboardIcon :size="14" />
-          <span>KEYBOARD</span>
-        </button>
-        <button 
-          :class="{ active: authMode === 'face' }" 
-          @click="authMode = 'face'"
-        >
-          <ScanFaceIcon :size="14" />
-          <span>BIOMETRIC</span>
-        </button>
+      <div class="auth-tabs" v-if="loginStep === 'initial'">
+        <div class="step-indicator">
+          <span class="step active">1</span>
+          <div class="step-line"></div>
+          <span class="step">2</span>
+        </div>
+        <p class="step-label">STEP 1: IDENTITY VERIFICATION</p>
+      </div>
+
+      <div class="auth-tabs" v-else>
+        <div class="step-indicator">
+          <span class="step completed"><CheckIcon :size="10" /></span>
+          <div class="step-line active"></div>
+          <span class="step active">2</span>
+        </div>
+        <p class="step-label">STEP 2: BIOMETRIC AUTHORIZATION</p>
       </div>
 
       <div class="auth-content">
-        <!-- Password Mode -->
-        <form v-if="authMode === 'password'" @submit.prevent="handlePasswordLogin" class="auth-form">
+        <!-- Step 1: Password -->
+        <form v-if="loginStep === 'password'" @submit.prevent="handlePasswordLogin" class="auth-form">
           <div class="form-group">
             <label><UserIcon :size="10" /> USERNAME</label>
             <div class="input-wrapper">
@@ -49,12 +50,18 @@
 
           <button type="submit" class="submit-btn" :disabled="loading">
             <Loader2Icon v-if="loading" class="spin" :size="18" />
-            <span>{{ loading ? 'VERIFYING...' : 'AUTHORIZE ACCESS' }}</span>
+            <span>{{ loading ? 'VERIFYING...' : 'CONTINUE' }}</span>
           </button>
         </form>
 
-        <!-- Face Mode -->
+        <!-- Step 2: Face 2FA -->
         <div v-else class="face-auth-section">
+          <div class="user-context-badge">
+            <UserIcon :size="12" />
+            <span>OPERATOR: {{ loginForm.username }}</span>
+            <button @click="resetLogin" class="reset-btn">CHANGE</button>
+          </div>
+
           <div class="face-scanner-wrapper">
             <ClientOnly>
               <FaceDetector ref="detectorRef" @detected="handleFaceDetection" />
@@ -64,8 +71,8 @@
             </div>
           </div>
           <p class="scan-hint">
-            <InfoIcon :size="12" />
-            Align face within markers for biometric verification
+            <ScanFaceIcon :size="12" />
+            Scanning for biometric signature...
           </p>
           <div v-if="error" class="error-msg">
             <AlertCircleIcon :size="14" />
@@ -92,12 +99,13 @@ import {
   Lock as LockIcon,
   AlertCircle as AlertCircleIcon,
   Loader2 as Loader2Icon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  Check as CheckIcon
 } from 'lucide-vue-next';
 
 const { fetchUser } = useAuth();
 const detectorRef = ref(null);
-const authMode = ref('password');
+const loginStep = ref('password'); // 'password' or 'biometric'
 const loading = ref(false);
 const error = ref('');
 
@@ -106,16 +114,27 @@ const loginForm = ref({
   password: ''
 });
 
+const resetLogin = () => {
+  loginStep.value = 'password';
+  error.value = '';
+};
+
 const handlePasswordLogin = async () => {
   loading.value = true;
   error.value = '';
   try {
-    await $fetch('/api/auth/login', {
+    const response = await $fetch('/api/auth/login', {
       method: 'POST',
       body: loginForm.value
     });
-    await fetchUser();
-    navigateTo('/');
+    
+    if (response.requires2fa) {
+      loginStep.value = 'biometric';
+    } else {
+      // Fallback if 2FA is disabled for some reason
+      await fetchUser();
+      navigateTo('/');
+    }
   } catch (err) {
     error.value = err.data?.statusMessage || 'Authentication failed';
   } finally {
@@ -130,7 +149,10 @@ const handleFaceDetection = async (data) => {
     try {
       await $fetch('/api/auth/face-login', {
         method: 'POST',
-        body: { faceDescriptor: data.descriptor }
+        body: { 
+          faceDescriptor: data.descriptor,
+          username: loginForm.value.username 
+        }
       });
       
       if (detectorRef.value) {
@@ -141,7 +163,7 @@ const handleFaceDetection = async (data) => {
       navigateTo('/');
     } catch (err) {
       if (err.statusCode !== 401) {
-        error.value = err.data?.statusMessage || 'Face recognition error';
+        error.value = err.data?.statusMessage || 'Biometric verification failed';
       }
     } finally {
       loading.value = false;
@@ -190,33 +212,64 @@ const handleFaceDetection = async (data) => {
 
 .auth-tabs {
   display: flex;
-  background: rgba(255, 255, 255, 0.03);
-  padding: 4px;
-  border-radius: 12px;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
   margin-bottom: 2rem;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
-.auth-tabs button {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: var(--text-dim);
-  padding: 0.75rem;
-  border-radius: 8px;
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  transition: all 0.3s;
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.step {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: var(--text-dim);
 }
 
-.auth-tabs button.active {
-  background: rgba(255, 255, 255, 0.07);
+.step.active {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: #000;
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+}
+
+.step.completed {
+  background: rgba(255, 255, 255, 0.1);
   color: var(--accent-green);
+  border-color: transparent;
+}
+
+.step-line {
+  width: 40px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.step-line.active {
+  background: var(--accent-green);
+}
+
+.step-label {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: var(--text-dim);
+  margin: 0;
 }
 
 .auth-form {
@@ -291,6 +344,30 @@ input:focus {
   flex-direction: column;
   align-items: center;
   gap: 1.25rem;
+}
+
+.user-context-badge {
+  background: rgba(0, 255, 136, 0.05);
+  border: 1px solid rgba(0, 255, 136, 0.1);
+  padding: 0.6rem 1rem;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--accent-green);
+}
+
+.reset-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.55rem;
+  text-decoration: underline;
+  cursor: pointer;
+  opacity: 0.6;
+  padding: 0;
 }
 
 .face-scanner-wrapper {

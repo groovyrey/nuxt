@@ -30,23 +30,54 @@
         </div>
 
         <form @submit.prevent="handleRegister" class="auth-form">
-          <div class="form-group">
+          <div class="form-group" :class="{ 'has-error': fieldErrors.username }">
             <label><UserIcon :size="10" /> USERNAME</label>
-            <input v-model="form.username" type="text" placeholder="Identity Handle" required />
+            <input 
+              v-model="form.username" 
+              type="text" 
+              placeholder="Identity Handle" 
+              required 
+              @blur="validateField('username')"
+              @input="validateField('username')"
+            />
+            <span v-if="fieldErrors.username" class="field-error">{{ fieldErrors.username }}</span>
           </div>
-          <div class="form-group">
+          <div class="form-group" :class="{ 'has-error': fieldErrors.email }">
             <label><MailIcon :size="10" /> EMAIL</label>
-            <input v-model="form.email" type="email" placeholder="comm-link@network.sys" required />
+            <input 
+              v-model="form.email" 
+              type="email" 
+              placeholder="comm-link@network.sys" 
+              required 
+              @blur="validateField('email')"
+              @input="validateField('email')"
+            />
+            <span v-if="fieldErrors.email" class="field-error">{{ fieldErrors.email }}</span>
           </div>
-          <div class="form-group">
+          <div class="form-group" :class="{ 'has-error': fieldErrors.password }">
             <label><LockIcon :size="10" /> PASSWORD</label>
-            <input v-model="form.password" type="password" placeholder="••••••••" required />
+            <input 
+              v-model="form.password" 
+              type="password" 
+              placeholder="••••••••" 
+              required 
+              @blur="validateField('password')"
+              @input="validateField('password')"
+            />
+            <span v-if="fieldErrors.password" class="field-error">{{ fieldErrors.password }}</span>
           </div>
           
           <div class="form-row">
-            <div class="form-group half">
+            <div class="form-group half" :class="{ 'has-error': fieldErrors.age }">
               <label><CalendarIcon :size="10" /> AGE</label>
-              <input v-model.number="form.age" type="number" placeholder="24" />
+              <input 
+                v-model.number="form.age" 
+                type="number" 
+                placeholder="24" 
+                @blur="validateField('age')"
+                @input="validateField('age')"
+              />
+              <span v-if="fieldErrors.age" class="field-error">{{ fieldErrors.age }}</span>
             </div>
             <div class="form-group half">
               <label><UsersIcon :size="10" /> GENDER</label>
@@ -63,7 +94,7 @@
             <span>{{ error }}</span>
           </div>
 
-          <button type="submit" class="submit-btn" :disabled="loading">
+          <button type="submit" class="submit-btn" :disabled="loading || !isFormValid">
             <Loader2Icon v-if="loading" class="spin" :size="18" />
             <span>{{ loading ? 'PROCESSING...' : 'INITIALIZE PROFILE' }}</span>
           </button>
@@ -104,6 +135,52 @@ const form = ref({
   password: '',
   age: null,
   gender: 'other'
+});
+
+const fieldErrors = ref({
+  username: '',
+  email: '',
+  password: '',
+  age: ''
+});
+
+const validateField = (field) => {
+  fieldErrors.value[field] = '';
+  
+  if (field === 'username') {
+    if (!form.value.username) fieldErrors.value.username = 'Username is required';
+    else if (!/^[a-zA-Z0-9_]{3,20}$/.test(form.value.username)) {
+      fieldErrors.value.username = '3-20 alphanumeric characters or underscores';
+    }
+  }
+  
+  if (field === 'email') {
+    if (!form.value.email) fieldErrors.value.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
+      fieldErrors.value.email = 'Invalid email format';
+    }
+  }
+  
+  if (field === 'password') {
+    if (!form.value.password) fieldErrors.value.password = 'Password is required';
+    else if (form.value.password.length < 8) {
+      fieldErrors.value.password = 'Minimum 8 characters required';
+    }
+  }
+
+  if (field === 'age') {
+    if (form.value.age && (form.value.age < 13 || form.value.age > 120)) {
+      fieldErrors.value.age = 'Age must be between 13 and 120';
+    }
+  }
+};
+
+const isFormValid = computed(() => {
+  return form.value.username && 
+         form.value.email && 
+         form.value.password && 
+         !Object.values(fieldErrors.value).some(err => err !== '') &&
+         faceCaptured.value;
 });
 
 const handleDetection = (data) => {
@@ -256,6 +333,23 @@ const handleRegister = async () => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  position: relative;
+}
+
+.field-error {
+  color: #ff4444;
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-top: 2px;
+}
+
+.form-group.has-error input {
+  border-color: rgba(255, 68, 68, 0.4);
+}
+
+.form-group.has-error input:focus {
+  border-color: #ff4444;
 }
 
 .form-row {
