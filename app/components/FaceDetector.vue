@@ -44,29 +44,49 @@ const startVideo = async () => {
 const handleVideoPlay = () => {
   if (!videoRef.value || !canvasRef.value) return;
 
-  const displaySize = {
-    width: videoRef.value.videoWidth,
-    height: videoRef.value.videoHeight,
+  // Use the actual displayed size of the video element
+  const updateDimensions = () => {
+    if (!videoRef.value || !canvasRef.value) return;
+    const displaySize = {
+      width: videoRef.value.offsetWidth,
+      height: videoRef.value.offsetHeight,
+    };
+    faceapi.matchDimensions(canvasRef.value, displaySize);
+    return displaySize;
   };
 
-  faceapi.matchDimensions(canvasRef.value, displaySize);
+  let displaySize = updateDimensions();
+
+  // Re-sync dimensions if window resizes
+  window.addEventListener('resize', () => {
+    displaySize = updateDimensions();
+  });
 
   detectionInterval = window.setInterval(async () => {
     if (!videoRef.value || !canvasRef.value || !isCameraStarted.value) return;
 
+    // Ensure we use the latest dimensions
+    if (videoRef.value.offsetWidth !== displaySize?.width) {
+      displaySize = updateDimensions();
+    }
+
     const detections = await faceapi
-      .detectAllFaces(videoRef.value, new faceapi.TinyFaceDetectorOptions())
+      .detectAllFaces(videoRef.value, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
       .withFaceLandmarks()
       .withFaceExpressions();
 
-    const resizedDetections = faceapi.resizeResults(detections, displaySize);
-
+    const resizedDetections = faceapi.resizeResults(detections, displaySize!);
+    
     const ctx = canvasRef.value.getContext('2d');
     if (ctx) {
       ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
-      faceapi.draw.drawDetections(canvasRef.value, resizedDetections);
-      faceapi.draw.drawFaceLandmarks(canvasRef.value, resizedDetections);
-      faceapi.draw.drawFaceExpressions(canvasRef.value, resizedDetections);
+      
+      if (detections.length > 0) {
+        // Explicitly set drawing options for visibility
+        faceapi.draw.drawDetections(canvasRef.value, resizedDetections);
+        faceapi.draw.drawFaceLandmarks(canvasRef.value, resizedDetections);
+        faceapi.draw.drawFaceExpressions(canvasRef.value, resizedDetections);
+      }
     }
   }, 100);
 };
@@ -168,26 +188,25 @@ onUnmounted(() => {
 
 .video-wrapper {
   position: relative;
-  width: 100%;
-  max-width: 640px;
-  aspect-ratio: 4/3;
+  display: inline-block;
   background: #000;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  line-height: 0; /* Remove extra space below video */
 }
 
 video {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-width: 640px;
+  height: auto;
+  display: block;
 }
 
 canvas {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  pointer-events: none;
 }
 </style>
