@@ -136,12 +136,19 @@ onMounted(async () => {
   isLoading.value = false;
 });
 
-onUnmounted(() => {
-  if (detectionInterval) clearInterval(detectionInterval);
+const stopCamera = () => {
   if (videoRef.value && videoRef.value.srcObject) {
     const stream = videoRef.value.srcObject as MediaStream;
     stream.getTracks().forEach(track => track.stop());
+    videoRef.value.srcObject = null;
+    isCameraStarted.value = false;
   }
+};
+
+defineExpose({ stopCamera });
+
+onUnmounted(() => {
+  stopCamera();
 });
 </script>
 

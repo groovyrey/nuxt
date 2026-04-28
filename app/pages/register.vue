@@ -10,7 +10,7 @@
         <div class="scanner-section">
           <div class="face-preview">
             <ClientOnly>
-              <FaceDetector @detected="handleDetection" />
+              <FaceDetector ref="detectorRef" @detected="handleDetection" />
             </ClientOnly>
             <div v-if="faceCaptured" class="capture-badge">FACE CAPTURED</div>
             <div v-else class="capture-badge scanning">SCANNING...</div>
@@ -63,6 +63,7 @@
 
 <script setup>
 const { fetchUser } = useAuth();
+const detectorRef = ref(null);
 const loading = ref(false);
 const error = ref('');
 const faceCaptured = ref(false);
@@ -77,10 +78,16 @@ const form = ref({
 });
 
 const handleDetection = (data) => {
-  if (data && data.descriptor) {
+  if (data && data.descriptor && !faceCaptured.value) {
     console.log('Biometric data received by Registry');
     capturedDescriptor.value = data.descriptor;
     faceCaptured.value = true;
+    
+    // Stop camera to reduce lag after capture
+    if (detectorRef.value) {
+      detectorRef.value.stopCamera();
+    }
+
     // Only auto-fill if the user hasn't touched these fields
     if (!form.value.age) form.value.age = data.age;
     if (form.value.gender === 'other') form.value.gender = data.gender;
