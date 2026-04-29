@@ -1,8 +1,10 @@
 <template>
+  <Toaster position="top-center" theme="dark" rich-colors />
   <NuxtPage />
 </template>
 
 <script setup>
+import { Toaster } from 'vue-sonner';
 const { fetchUser } = useAuth();
 
 onMounted(() => {

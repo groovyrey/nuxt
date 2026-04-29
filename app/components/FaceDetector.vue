@@ -29,14 +29,24 @@ const emit = defineEmits(['detected']);
 
 const loadModels = async () => {
   try {
+    // Skip if already loaded
+    if (faceapi.nets.ssdMobilenetv1.params) {
+      isLoading.value = false;
+      return;
+    }
+
     const MODEL_URL = window.location.origin + '/models';
-    await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+    await Promise.all([
+      faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+    ]);
     
     if (!props.minimal) {
-      await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-      await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
+      await Promise.all([
+        faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+        faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL)
+      ]);
     }
   } catch (err: any) {
     console.error('Error loading models:', err);
@@ -49,8 +59,8 @@ const startVideo = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ 
       video: { 
         facingMode: 'user',
-        width: { ideal: 640 }, 
-        height: { ideal: 480 }
+        width: { ideal: 480 }, 
+        height: { ideal: 360 }
       } 
     });
     if (videoRef.value) {
@@ -76,6 +86,8 @@ const handleVideoPlay = () => {
   let isDetecting = false;
   let frameCount = 0;
   let displaySize = updateDimensions();
+  let lastDetectionTime = 0;
+  const DETECTION_THROTTLE = 150; // ms
 
   const detect = async () => {
     if (!videoRef.value || !canvasRef.value || !isCameraStarted.value || isDetecting) {
@@ -83,7 +95,14 @@ const handleVideoPlay = () => {
       return;
     }
 
+    const now = Date.now();
+    if (now - lastDetectionTime < DETECTION_THROTTLE) {
+      requestAnimationFrame(detect);
+      return;
+    }
+
     isDetecting = true;
+    lastDetectionTime = now;
     frameCount++;
 
     try {
@@ -99,12 +118,14 @@ const handleVideoPlay = () => {
       }
 
       const detection = await task;
+      const ctx = canvasRef.value.getContext('2d', { alpha: true });
+      if (ctx) ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
 
       if (detection) {
         // Only accept detection if it's reasonably large (not a background face)
         const box = detection.detection.box;
         const faceArea = box.width * box.height;
-        const frameArea = videoRef.value.offsetWidth * videoRef.value.offsetHeight;
+        const frameArea = displaySize.width * displaySize.height;
         const coverage = faceArea / frameArea;
 
         if (coverage < 0.2) {
@@ -112,24 +133,17 @@ const handleVideoPlay = () => {
           return;
         }
 
-        const ctx = canvasRef.value.getContext('2d', { alpha: true });
-
-        if (ctx) {
-          ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
-          
-          if (detection.descriptor) {
-            const payload: any = { descriptor: Array.from(detection.descriptor) };
-            if (!props.minimal && (detection as any).age) {
-              payload.age = Math.round((detection as any).age);
-              payload.gender = (detection as any).gender;
-              payload.expression = Object.entries((detection as any).expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
-            }
-            emit('detected', payload);
+        if (ctx && detection.descriptor) {
+          const payload: any = { descriptor: Array.from(detection.descriptor) };
+          if (!props.minimal && (detection as any).age) {
+            payload.age = Math.round((detection as any).age);
+            payload.gender = (detection as any).gender;
+            payload.expression = Object.entries((detection as any).expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
           }
+          emit('detected', payload);
         }
       } else {
         if (frameCount % 10 === 0) emit('detected', null);
-        canvasRef.value.getContext('2d')?.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
       }
     } catch (err) {
       console.error('Detection error:', err);

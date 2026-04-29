@@ -91,6 +91,7 @@
 </template>
 
 <script setup>
+import { toast } from 'vue-sonner';
 import { 
   ShieldAlert as ShieldAlertIcon,
   Keyboard as KeyboardIcon,
@@ -130,13 +131,16 @@ const handlePasswordLogin = async () => {
     
     if (response.requires2fa) {
       loginStep.value = 'biometric';
+      toast.success('Identity Verified', { description: 'Please complete biometric scan' });
     } else {
       // Fallback if 2FA is disabled for some reason
+      toast.success('Access Granted');
       await fetchUser();
       navigateTo('/');
     }
   } catch (err) {
     error.value = err.data?.statusMessage || 'Authentication failed';
+    toast.error('Access Denied', { description: error.value });
   } finally {
     loading.value = false;
   }

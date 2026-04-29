@@ -138,6 +138,7 @@
 </template>
 
 <script setup>
+import { toast } from 'vue-sonner';
 import { 
   Check as CheckIcon,
   CheckCircle as CheckCircleIcon,
@@ -192,6 +193,7 @@ const handleDetection = (data) => {
   if (data && data.descriptor && !faceCaptured.value) {
     capturedDescriptor.value = data.descriptor;
     faceCaptured.value = true;
+    toast.success('Biometrics Captured', { description: 'Facial signature verified' });
     
     if (detectorRef.value) {
       detectorRef.value.stopCamera();
@@ -215,10 +217,12 @@ const handleRegister = async () => {
       }
     });
     
+    toast.success('Profile Created', { description: 'Welcome to Neural Systems' });
     await fetchUser();
     navigateTo('/');
   } catch (err) {
     error.value = err.data?.statusMessage || 'Registration failed';
+    toast.error('Registration Failed', { description: error.value });
   } finally {
     loading.value = false;
   }
