@@ -59,16 +59,18 @@ export default defineEventHandler(async (event) => {
   const db = useDb();
   
   try {
-    // Check if face is already registered
+    /* 
+    // Biometric uniqueness check disabled per request
     if (faceDescriptor && Array.isArray(faceDescriptor)) {
-      const existingUser = await findMatchingUserByFace(faceDescriptor);
-      if (existingUser) {
+      const matchedUser = await findMatchingUserByFace(faceDescriptor);
+      if (matchedUser) {
         throw createError({
           statusCode: 409,
           statusMessage: 'This biometric profile is already registered to another account',
         });
       }
     }
+    */
 
     const hashed = await hashPassword(password);
     

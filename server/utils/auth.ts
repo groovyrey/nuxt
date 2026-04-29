@@ -45,6 +45,10 @@ export function parseDescriptor(d: any): number[] | null {
   if (!d) return null;
   try {
     let parsed = d;
+    
+    // Log type for debugging
+    console.log(`Parsing descriptor. Type: ${typeof d}, IsBuffer: ${Buffer.isBuffer(d)}`);
+
     // Handle Buffer (sometimes returned by DB drivers)
     if (typeof d === 'object' && d !== null && 'type' in d && d.type === 'Buffer') {
       parsed = Buffer.from(d.data).toString('utf8');
@@ -54,13 +58,20 @@ export function parseDescriptor(d: any): number[] | null {
     
     // Handle Stringified JSON
     if (typeof parsed === 'string') {
-      parsed = JSON.parse(parsed);
+      try {
+        parsed = JSON.parse(parsed);
+      } catch (e) {
+        console.error('JSON parse failed for descriptor string');
+        return null;
+      }
     }
     
     // Ensure it is an array of numbers
     if (Array.isArray(parsed)) {
       return parsed.map(Number);
     }
+    
+    console.error('Descriptor is not an array after parsing:', typeof parsed);
     return null;
   } catch (e) {
     console.error('Error parsing face descriptor:', e);

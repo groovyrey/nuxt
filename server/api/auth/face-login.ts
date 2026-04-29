@@ -75,7 +75,12 @@ export default defineEventHandler(async (event) => {
     });
     return { success: true, username: finalUsername };
   } catch (error: any) {
-    console.error('Face Login Server Error:', error);
+    console.error('FACE_LOGIN_CRITICAL_ERROR:', {
+      message: error.message,
+      stack: error.stack,
+      statusCode: error.statusCode,
+      data: error.data
+    });
     if (error.statusCode) throw error;
     throw createError({
       statusCode: 500,
