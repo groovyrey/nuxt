@@ -5,8 +5,7 @@ import {
   AlertTriangle as AlertTriangleIcon, 
   Camera as CameraIcon, 
   Scan as ScanIcon,
-  Loader2 as Loader2Icon,
-  XCircle as XCircleIcon
+  Loader2 as Loader2Icon
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -25,14 +24,13 @@ const canvasRef = ref<HTMLCanvasElement | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const isCameraStarted = ref(false);
-const isErrorState = ref(false);
 
 const emit = defineEmits(['detected']);
 
 const loadModels = async () => {
   try {
     const MODEL_URL = window.location.origin + '/models';
-    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
     await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
     await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
     
@@ -48,7 +46,6 @@ const loadModels = async () => {
 
 const startVideo = async () => {
   try {
-    isErrorState.value = false;
     const stream = await navigator.mediaDevices.getUserMedia({ 
       video: { 
         facingMode: 'user',
@@ -66,10 +63,6 @@ const startVideo = async () => {
   }
 };
 
-const triggerError = () => {
-  isErrorState.value = true;
-};
-
 const handleVideoPlay = () => {
   if (!videoRef.value || !canvasRef.value) return;
 
@@ -85,7 +78,7 @@ const handleVideoPlay = () => {
   let displaySize = updateDimensions();
 
   const detect = async () => {
-    if (!videoRef.value || !canvasRef.value || !isCameraStarted.value || isDetecting || isErrorState.value) {
+    if (!videoRef.value || !canvasRef.value || !isCameraStarted.value || isDetecting) {
       requestAnimationFrame(detect);
       return;
     }
@@ -98,7 +91,7 @@ const handleVideoPlay = () => {
         displaySize = updateDimensions();
       }
 
-      const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 });
+      const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
       let task: any = faceapi.detectSingleFace(videoRef.value, options).withFaceLandmarks().withFaceDescriptor();
 
       if (!props.minimal) {
@@ -108,18 +101,11 @@ const handleVideoPlay = () => {
       const detection = await task;
 
       if (detection) {
-        const resizedDetection = faceapi.resizeResults(detection, displaySize!);
         const ctx = canvasRef.value.getContext('2d', { alpha: true });
 
         if (ctx) {
           ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
-          faceapi.draw.drawFaceLandmarks(canvasRef.value, resizedDetection);
           
-          if (!props.minimal) {
-            faceapi.draw.drawDetections(canvasRef.value, resizedDetection);
-            faceapi.draw.drawFaceExpressions(canvasRef.value, resizedDetection);
-          }
-
           if (detection.descriptor) {
             const payload: any = { descriptor: Array.from(detection.descriptor) };
             if (!props.minimal && (detection as any).age) {
@@ -159,12 +145,12 @@ const stopCamera = () => {
   }
 };
 
-defineExpose({ stopCamera, triggerError });
+defineExpose({ stopCamera });
 onUnmounted(() => stopCamera());
 </script>
 
 <template>
-  <div class="face-detector-container" :class="{ 'is-error': isErrorState }">
+  <div class="face-detector-container">
     <div v-if="error" class="error-toast">
       <AlertTriangleIcon :size="18" />
       <span>{{ error }}</span>
@@ -195,7 +181,7 @@ onUnmounted(() => stopCamera());
       <div class="corner br"></div>
 
       <!-- Alignment Guide Oval -->
-      <div v-if="showGuide && !isErrorState" class="face-guide">
+      <div v-if="showGuide" class="face-guide">
         <div class="guide-oval"></div>
         <div class="guide-text">ALIGN FACE WITHIN PORTAL</div>
       </div>
@@ -203,13 +189,7 @@ onUnmounted(() => stopCamera());
       <video ref="videoRef" autoplay muted playsinline @play="handleVideoPlay"></video>
       <canvas ref="canvasRef"></canvas>
       
-      <div class="scanning-line" v-if="!isErrorState"></div>
-      
-      <div v-if="isErrorState" class="error-overlay">
-        <XCircleIcon :size="48" color="#ff4444" />
-        <p>ACCESS DENIED</p>
-        <span class="sub">IDENTITY MISMATCH</span>
-      </div>
+      <div class="scanning-line"></div>
     </div>
   </div>
 </template>
@@ -340,8 +320,6 @@ canvas {
 .bl { bottom: 15px; left: 15px; border-right: none; border-top: none; }
 .br { bottom: 15px; right: 15px; border-left: none; border-top: none; }
 
-.is-error .corner { border-color: #ff4444; }
-
 .scanning-line {
   position: absolute;
   top: 0;
@@ -357,39 +335,6 @@ canvas {
 @keyframes scan {
   0% { top: 0%; }
   100% { top: 100%; }
-}
-
-.error-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 20;
-  backdrop-filter: saturate(0.5);
-  animation: blink 0.5s step-end 2;
-}
-
-@keyframes blink {
-  50% { background: rgba(255, 0, 0, 0.3); }
-}
-
-.error-overlay p {
-  color: #ff4444;
-  font-weight: 900;
-  letter-spacing: 0.3em;
-  font-size: 1.2rem;
-  margin: 1rem 0 0.2rem;
-}
-
-.error-overlay .sub {
-  color: #ff4444;
-  font-size: 0.6rem;
-  letter-spacing: 0.1em;
-  font-weight: 700;
-  opacity: 0.8;
 }
 
 .spin { animation: spin 1s linear infinite; }
