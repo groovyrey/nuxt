@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as faceapi from '@vladmandic/face-api';
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { 
   AlertTriangle as AlertTriangleIcon, 
   Camera as CameraIcon, 
@@ -26,21 +26,25 @@ const emit = defineEmits(['detected']);
 const loadModels = async () => {
   try {
     const MODEL_URL = window.location.origin + '/models';
-    console.log('Attempting to load models from:', MODEL_URL);
     
-    await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+    // Core models always needed
     await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
     await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
     
-    if (!props.minimal) {
+    if (props.minimal) {
+      // Light model for Login (High FPS)
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    } else {
+      // Heavy models for Registration (High Accuracy)
+      await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
       await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
       await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
     }
     
-    console.log(`Neural Engine initialized (Mode: ${props.minimal ? 'Minimal' : 'Full'})`);
+    console.log(`Neural Engine: ${props.minimal ? 'Performance Mode' : 'Precision Mode'}`);
   } catch (err: any) {
     console.error('Error loading models:', err);
-    error.value = `Neural Engine Error: ${err.message || 'Check network connection'}`;
+    error.value = 'Neural Engine initialization failed.';
   }
 };
 
@@ -49,8 +53,8 @@ const startVideo = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ 
       video: { 
         facingMode: 'user',
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
+        width: { ideal: 640 }, // Lower resolution for better performance on mobile
+        height: { ideal: 480 }
       } 
     });
     if (videoRef.value) {
@@ -59,8 +63,7 @@ const startVideo = async () => {
       error.value = null;
     }
   } catch (err) {
-    console.error('Error starting video:', err);
-    error.value = 'Biometric sensor access denied.';
+    error.value = 'Camera access denied.';
   }
 };
 
@@ -69,15 +72,9 @@ const handleVideoPlay = () => {
 
   const updateDimensions = () => {
     if (!videoRef.value || !canvasRef.value) return;
-    
-    // Use offsetDimensions of the video element for landmark mapping
-    const displaySize = {
-      width: videoRef.value.offsetWidth,
-      height: videoRef.value.offsetHeight,
-    };
-    
-    faceapi.matchDimensions(canvasRef.value, displaySize);
-    return displaySize;
+    const size = { width: videoRef.value.offsetWidth, height: videoRef.value.offsetHeight };
+    faceapi.matchDimensions(canvasRef.value, size);
+    return size;
   };
 
   let isDetecting = false;
@@ -94,15 +91,18 @@ const handleVideoPlay = () => {
     frameCount++;
 
     try {
-      // Re-calculate if size changed (e.g. rotation)
       if (videoRef.value.offsetWidth !== displaySize?.width) {
         displaySize = updateDimensions();
       }
 
-      let task: any = faceapi.detectSingleFace(
-        videoRef.value,
-        new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 })
-      ).withFaceLandmarks().withFaceDescriptor();
+      // Optimization: use the lightweight detector for login
+      const options = props.minimal 
+        ? new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 })
+        : new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
+
+      let task: any = faceapi.detectSingleFace(videoRef.value, options)
+        .withFaceLandmarks()
+        .withFaceDescriptor();
 
       if (!props.minimal) {
         task = task.withFaceExpressions().withAgeAndGender();
@@ -116,6 +116,8 @@ const handleVideoPlay = () => {
 
         if (ctx) {
           ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
+          
+          // The "Wire"
           faceapi.draw.drawFaceLandmarks(canvasRef.value, resizedDetection);
           
           if (!props.minimal) {
@@ -124,23 +126,18 @@ const handleVideoPlay = () => {
           }
 
           if (detection.descriptor) {
-            const payload: any = {
-              descriptor: Array.from(detection.descriptor)
-            };
-
-            if (!props.minimal && (detection as any).age) {
+            const payload: any = { descriptor: Array.from(detection.descriptor) };
+            if (!props.minimal) {
               payload.age = Math.round((detection as any).age);
               payload.gender = (detection as any).gender;
               payload.expression = Object.entries((detection as any).expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
             }
-
             emit('detected', payload);
           }
         }
       } else {
         if (frameCount % 10 === 0) emit('detected', null);
-        const ctx = canvasRef.value.getContext('2d');
-        ctx?.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
+        canvasRef.value.getContext('2d')?.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
       }
     } catch (err) {
       console.error('Detection error:', err);
@@ -168,10 +165,7 @@ const stopCamera = () => {
 };
 
 defineExpose({ stopCamera });
-
-onUnmounted(() => {
-  stopCamera();
-});
+onUnmounted(() => stopCamera());
 </script>
 
 <template>
@@ -183,40 +177,25 @@ onUnmounted(() => {
     
     <div v-if="isLoading" class="setup-screen">
       <Loader2Icon class="spin accent" :size="48" />
-      <p class="hint">LOADING NEURAL ENGINE...</p>
+      <p class="hint">INITIALIZING AI...</p>
     </div>
 
     <div v-else-if="!isCameraStarted" class="setup-screen">
       <div class="scanner-rings">
         <div class="ring"></div>
         <div class="ring"></div>
-        <div class="center-icon">
-          <CameraIcon :size="32" class="accent" />
-        </div>
+        <div class="center-icon"><CameraIcon :size="32" class="accent" /></div>
       </div>
       <button @click="startVideo" class="start-btn">
         <ScanIcon :size="18" />
-        <span>INITIALIZE SCANNER</span>
+        <span>START SCANNER</span>
       </button>
-      <p class="hint">Biometric authentication required</p>
     </div>
 
     <div class="video-container" v-show="isCameraStarted">
-      <div class="corner tl"></div>
-      <div class="corner tr"></div>
-      <div class="corner bl"></div>
-      <div class="corner br"></div>
-      
-      <video
-        ref="videoRef"
-        autoplay
-        muted
-        playsinline
-        @play="handleVideoPlay"
-      ></video>
+      <video ref="videoRef" autoplay muted playsinline @play="handleVideoPlay"></video>
       <canvas ref="canvasRef"></canvas>
-      
-      <div class="scanning-line" v-if="isCameraStarted"></div>
+      <div class="scanning-line"></div>
     </div>
   </div>
 </template>
@@ -241,20 +220,12 @@ onUnmounted(() => {
   color: white;
   padding: 0.8rem 1.2rem;
   border-radius: 8px;
-  font-weight: 600;
   font-size: 0.75rem;
   z-index: 20;
   display: flex;
   align-items: center;
   gap: 10px;
-  animation: slideDown 0.3s ease;
   width: 90%;
-  box-sizing: border-box;
-}
-
-@keyframes slideDown {
-  from { transform: translateY(-20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
 }
 
 .setup-screen {
@@ -263,21 +234,15 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 1.5rem;
-  padding: 2rem;
 }
 
 .scanner-rings {
   position: relative;
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.center-icon {
-  z-index: 2;
-  opacity: 0.8;
 }
 
 .ring {
@@ -287,10 +252,6 @@ onUnmounted(() => {
   opacity: 0.2;
   border-radius: 50%;
   animation: pulse 2s infinite;
-}
-
-.ring:nth-child(2) {
-  animation-delay: 1s;
 }
 
 @keyframes pulse {
@@ -305,56 +266,23 @@ onUnmounted(() => {
   padding: 0.8rem 1.5rem;
   font-size: 0.8rem;
   font-weight: 800;
-  letter-spacing: 0.15em;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s;
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.start-btn:hover {
-  background: var(--accent-green);
-  color: #000;
-  box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
-}
-
-.hint {
-  color: #444;
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin: 0;
 }
 
 .video-container {
   position: relative;
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #000;
 }
-
-.corner {
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--accent-green);
-  z-index: 10;
-}
-
-.tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
-.tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
-.bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
-.br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
 
 video {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Use cover to fill the square/circle portal */
+  object-fit: cover;
   transform: scaleX(-1);
 }
 
@@ -365,7 +293,6 @@ canvas {
   width: 100%;
   height: 100%;
   transform: scaleX(-1);
-  pointer-events: none;
 }
 
 .scanning-line {
@@ -374,10 +301,9 @@ canvas {
   left: 0;
   width: 100%;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent-green), transparent);
-  animation: scan 3s linear infinite;
-  z-index: 5;
+  background: var(--accent-green);
   box-shadow: 0 0 15px var(--accent-green);
+  animation: scan 3s linear infinite;
 }
 
 @keyframes scan {
@@ -385,14 +311,8 @@ canvas {
   100% { top: 100%; }
 }
 
-.spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .accent { color: var(--accent-green); }
+.hint { color: #444; font-size: 0.6rem; letter-spacing: 0.1em; }
 </style>
