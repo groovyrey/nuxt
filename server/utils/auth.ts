@@ -39,7 +39,7 @@ export const deleteSession = async (sessionId: string) => {
   await db.execute('DELETE FROM sessions WHERE id = ?', [sessionId]);
 };
 
-export const EUCLIDEAN_THRESHOLD = 0.6;
+export const EUCLIDEAN_THRESHOLD = 0.4;
 
 export function parseDescriptor(d: any): number[] | null {
   if (!d) return null;

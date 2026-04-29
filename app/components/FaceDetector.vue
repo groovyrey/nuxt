@@ -91,7 +91,7 @@ const handleVideoPlay = () => {
         displaySize = updateDimensions();
       }
 
-      const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
+      const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.7 });
       let task: any = faceapi.detectSingleFace(videoRef.value, options).withFaceLandmarks().withFaceDescriptor();
 
       if (!props.minimal) {
@@ -101,6 +101,17 @@ const handleVideoPlay = () => {
       const detection = await task;
 
       if (detection) {
+        // Only accept detection if it's reasonably large (not a background face)
+        const box = detection.detection.box;
+        const faceArea = box.width * box.height;
+        const frameArea = videoRef.value.offsetWidth * videoRef.value.offsetHeight;
+        const coverage = faceArea / frameArea;
+
+        if (coverage < 0.2) {
+          if (frameCount % 10 === 0) emit('detected', null);
+          return;
+        }
+
         const ctx = canvasRef.value.getContext('2d', { alpha: true });
 
         if (ctx) {
