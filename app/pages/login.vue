@@ -64,7 +64,7 @@
 
           <div class="face-scanner-wrapper">
             <ClientOnly>
-              <FaceDetector ref="detectorRef" minimal @detected="handleFaceDetection" />
+              <FaceDetector ref="detectorRef" minimal show-guide @detected="handleFaceDetection" />
             </ClientOnly>
             <div class="scan-overlay">
               <div class="scan-line"></div>

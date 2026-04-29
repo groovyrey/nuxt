@@ -13,6 +13,10 @@ const props = defineProps({
   minimal: {
     type: Boolean,
     default: false
+  },
+  showGuide: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -64,7 +68,6 @@ const startVideo = async () => {
 
 const triggerError = () => {
   isErrorState.value = true;
-  // Keep the last frame visible for a moment but stop processing
 };
 
 const handleVideoPlay = () => {
@@ -185,10 +188,17 @@ onUnmounted(() => stopCamera());
     </div>
 
     <div class="video-container" v-show="isCameraStarted">
+      <!-- High-Tech Corners -->
       <div class="corner tl"></div>
       <div class="corner tr"></div>
       <div class="corner bl"></div>
       <div class="corner br"></div>
+
+      <!-- Alignment Guide Oval -->
+      <div v-if="showGuide && !isErrorState" class="face-guide">
+        <div class="guide-oval"></div>
+        <div class="guide-text">ALIGN FACE WITHIN PORTAL</div>
+      </div>
 
       <video ref="videoRef" autoplay muted playsinline @play="handleVideoPlay"></video>
       <canvas ref="canvasRef"></canvas>
@@ -282,6 +292,38 @@ canvas {
   width: 100%;
   height: 100%;
   transform: scaleX(-1);
+  z-index: 2;
+}
+
+/* Face Guide Styles */
+.face-guide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.guide-oval {
+  width: 60%;
+  height: 70%;
+  border: 2px dashed rgba(0, 255, 136, 0.4);
+  border-radius: 50% / 45%;
+  position: relative;
+  box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
+}
+
+.guide-text {
+  margin-top: 1rem;
+  color: var(--accent-green);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
 }
 
 .corner {

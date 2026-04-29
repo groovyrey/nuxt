@@ -34,7 +34,7 @@
           <div v-if="currentStep === 1" key="step1" class="step-container">
             <div class="scanner-wrapper">
               <ClientOnly>
-                <FaceDetector ref="detectorRef" @detected="handleDetection" />
+                <FaceDetector ref="detectorRef" show-guide @detected="handleDetection" />
               </ClientOnly>
               <div v-if="faceCaptured" class="capture-overlay">
                 <div class="success-circle">
