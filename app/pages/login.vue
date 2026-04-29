@@ -9,22 +9,22 @@
         <p class="subtitle">System Authentication Required</p>
       </header>
 
-      <div class="auth-tabs" v-if="loginStep === 'password'">
-        <div class="step-indicator">
-          <span class="step active">1</span>
-          <div class="step-line"></div>
-          <span class="step">2</span>
+      <!-- Step Indicator -->
+      <div class="step-progress">
+        <div class="step-item" :class="{ 'active': loginStep === 'password', 'completed': loginStep !== 'password' }">
+          <div class="step-number">
+            <CheckIcon v-if="loginStep !== 'password'" :size="14" />
+            <span v-else>1</span>
+          </div>
+          <span class="step-text">IDENTITY</span>
         </div>
-        <p class="step-label">STEP 1: IDENTITY VERIFICATION</p>
-      </div>
-
-      <div class="auth-tabs" v-else>
-        <div class="step-indicator">
-          <span class="step completed"><CheckIcon :size="10" /></span>
-          <div class="step-line active"></div>
-          <span class="step active">2</span>
+        <div class="step-item" :class="{ 'active': loginStep === 'biometric' }">
+          <div class="step-number">2</div>
+          <span class="step-text">BIOMETRICS</span>
         </div>
-        <p class="step-label">STEP 2: BIOMETRIC AUTHORIZATION</p>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" :style="{ width: loginStep === 'password' ? '0%' : '100%' }"></div>
+        </div>
       </div>
 
       <div class="auth-content">
@@ -188,17 +188,17 @@ const handleFaceDetection = async (data) => {
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: var(--bg-black);
+  background: var(--bg-app);
 }
 
 .auth-card {
   width: 100%;
   max-width: 440px;
   background: var(--card-black);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
   border-radius: 24px;
   padding: 2.5rem;
-  box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+  box-shadow: 0 40px 100px var(--shadow-color);
 }
 
 .auth-header {
@@ -219,66 +219,78 @@ const handleFaceDetection = async (data) => {
   letter-spacing: 0.05em;
 }
 
-.auth-tabs {
+/* Step Progress */
+.step-progress {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 3rem;
+  position: relative;
+  padding: 0 10px;
+}
+
+.progress-bar-bg {
+  position: absolute;
+  top: 15px;
+  left: 30px;
+  right: 30px;
+  height: 2px;
+  background: var(--border-color);
+  z-index: 1;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent-green);
+  transition: width 0.4s ease;
+  box-shadow: 0 0 10px var(--accent-green);
+}
+
+.step-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  background: rgba(255, 255, 255, 0.02);
-  padding: 1.5rem;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  gap: 8px;
+  z-index: 2;
+  position: relative;
 }
 
-.step-indicator {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.step {
-  width: 24px;
-  height: 24px;
+.step-number {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--card-black);
+  border: 2px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   font-weight: 800;
   color: var(--text-dim);
+  transition: all 0.3s ease;
 }
 
-.step.active {
+.step-item.active .step-number {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+  box-shadow: 0 0 20px rgba(var(--accent-green-rgb), 0.2);
+}
+
+.step-item.completed .step-number {
   background: var(--accent-green);
   border-color: var(--accent-green);
-  color: #000;
-  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+  color: var(--bg-black);
 }
 
-.step.completed {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--accent-green);
-  border-color: transparent;
-}
-
-.step-line {
-  width: 40px;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.step-line.active {
-  background: var(--accent-green);
-}
-
-.step-label {
-  font-size: 0.6rem;
+.step-text {
+  font-size: 0.55rem;
   font-weight: 800;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.1em;
   color: var(--text-dim);
-  margin: 0;
+  text-transform: uppercase;
+}
+
+.step-item.active .step-text {
+  color: var(--text-main);
 }
 
 .auth-form {
@@ -305,11 +317,11 @@ label {
 
 input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
   padding: 0.85rem 1rem;
   border-radius: 10px;
-  color: #fff;
+  color: var(--text-main);
   font-size: 0.9rem;
   transition: all 0.3s;
   box-sizing: border-box;
@@ -318,12 +330,12 @@ input {
 input:focus {
   outline: none;
   border-color: var(--accent-green);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(var(--accent-green-rgb), 0.05);
 }
 
 .submit-btn {
   background: var(--accent-green);
-  color: #000;
+  color: var(--bg-black);
   border: none;
   padding: 1rem;
   border-radius: 10px;
@@ -339,7 +351,7 @@ input:focus {
 }
 
 .submit-btn:hover:not(:disabled) {
-  box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+  box-shadow: 0 0 30px rgba(var(--accent-green-rgb), 0.4);
   transform: translateY(-1px);
 }
 
@@ -356,8 +368,8 @@ input:focus {
 }
 
 .user-context-badge {
-  background: rgba(0, 255, 136, 0.05);
-  border: 1px solid rgba(0, 255, 136, 0.1);
+  background: rgba(var(--accent-green-rgb), 0.1);
+  border: 1px solid rgba(var(--accent-green-rgb), 0.2);
   padding: 0.6rem 1rem;
   border-radius: 30px;
   display: flex;
@@ -371,7 +383,7 @@ input:focus {
 .reset-btn {
   background: transparent;
   border: none;
-  color: #fff;
+  color: var(--text-main);
   font-size: 0.55rem;
   text-decoration: underline;
   cursor: pointer;
@@ -385,7 +397,7 @@ input:focus {
   background: #000;
   border-radius: 20px;
   overflow: hidden;
-  border: 1px solid rgba(0, 255, 136, 0.2);
+  border: 1px solid var(--border-color);
   position: relative;
 }
 
@@ -416,7 +428,7 @@ input:focus {
 .auth-footer {
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--border-color);
 }
 
 .auth-link {

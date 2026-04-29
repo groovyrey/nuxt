@@ -59,18 +59,33 @@
           <!-- STEP 2: PROFILE DETAILS -->
           <div v-else-if="currentStep === 2" key="step2" class="step-container">
             <div class="auth-form">
-              <div class="form-group">
+              <div class="form-group" :class="{ 'has-error': touched.username && !validation.username.valid }">
                 <label><UserIcon :size="10" /> USERNAME</label>
-                <input v-model="form.username" type="text" placeholder="Identity Handle" />
+                <div class="input-wrapper">
+                  <input v-model="form.username" type="text" placeholder="Identity Handle" @blur="touch('username')" />
+                  <AlertCircleIcon v-if="touched.username && !validation.username.valid" class="error-icon" :size="16" />
+                </div>
+                <Transition name="fade-in">
+                  <span v-if="touched.username && !validation.username.valid" class="field-error">{{ validation.username.message }}</span>
+                </Transition>
               </div>
-              <div class="form-group">
+              <div class="form-group" :class="{ 'has-error': touched.email && !validation.email.valid }">
                 <label><MailIcon :size="10" /> EMAIL ADDRESS</label>
-                <input v-model="form.email" type="email" placeholder="operator@neural.sys" />
+                <div class="input-wrapper">
+                  <input v-model="form.email" type="email" placeholder="operator@neural.sys" @blur="touch('email')" />
+                  <AlertCircleIcon v-if="touched.email && !validation.email.valid" class="error-icon" :size="16" />
+                </div>
+                <Transition name="fade-in">
+                  <span v-if="touched.email && !validation.email.valid" class="field-error">{{ validation.email.message }}</span>
+                </Transition>
               </div>
               <div class="form-row">
-                <div class="form-group half">
+                <div class="form-group half" :class="{ 'has-error': touched.age && !validation.age.valid }">
                   <label><CalendarIcon :size="10" /> AGE</label>
-                  <input v-model.number="form.age" type="number" />
+                  <input v-model.number="form.age" type="number" @blur="touch('age')" />
+                  <Transition name="fade-in">
+                    <span v-if="touched.age && !validation.age.valid" class="field-error">{{ validation.age.message }}</span>
+                  </Transition>
                 </div>
                 <div class="form-group half">
                   <label><UsersIcon :size="10" /> GENDER</label>
@@ -98,13 +113,25 @@
           <!-- STEP 3: SECURITY -->
           <div v-else-if="currentStep === 3" key="step3" class="step-container">
             <div class="auth-form">
-              <div class="form-group">
+              <div class="form-group" :class="{ 'has-error': touched.password && !validation.password.valid }">
                 <label><LockIcon :size="10" /> ACCESS PASSWORD</label>
-                <input v-model="form.password" type="password" placeholder="••••••••" />
+                <div class="input-wrapper">
+                  <input v-model="form.password" type="password" placeholder="••••••••" @blur="touch('password')" />
+                  <AlertCircleIcon v-if="touched.password && !validation.password.valid" class="error-icon" :size="16" />
+                </div>
+                <Transition name="fade-in">
+                  <span v-if="touched.password && !validation.password.valid" class="field-error">{{ validation.password.message }}</span>
+                </Transition>
               </div>
-              <div class="form-group">
+              <div class="form-group" :class="{ 'has-error': touched.confirmPassword && !validation.confirmPassword.valid }">
                 <label><ShieldCheckIcon :size="10" /> CONFIRM PASSWORD</label>
-                <input v-model="confirmPassword" type="password" placeholder="••••••••" />
+                <div class="input-wrapper">
+                  <input v-model="confirmPassword" type="password" placeholder="••••••••" @blur="touch('confirmPassword')" />
+                  <AlertCircleIcon v-if="touched.confirmPassword && !validation.confirmPassword.valid" class="error-icon" :size="16" />
+                </div>
+                <Transition name="fade-in">
+                  <span v-if="touched.confirmPassword && !validation.confirmPassword.valid" class="field-error">{{ validation.confirmPassword.message }}</span>
+                </Transition>
               </div>
 
               <div v-if="error" class="error-msg">
@@ -178,15 +205,56 @@ const form = ref({
   gender: 'other'
 });
 
+const touched = ref({
+  username: false,
+  email: false,
+  age: false,
+  password: false,
+  confirmPassword: false
+});
+
+const touch = (field) => {
+  touched.value[field] = true;
+};
+
+const validation = computed(() => {
+  const usernameRegex = /^[a-zA-Z](?:[a-zA-Z0-9._](?![._])){1,18}[a-zA-Z0-9]$/;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
+
+  return {
+    username: {
+      valid: usernameRegex.test(form.value.username),
+      message: '3-20 chars, start with letter, no consecutive symbols'
+    },
+    email: {
+      valid: emailRegex.test(form.value.email),
+      message: 'Enter a valid neural-link address'
+    },
+    age: {
+      valid: form.value.age >= 13 && form.value.age <= 120,
+      message: 'Age must be between 13 and 120'
+    },
+    password: {
+      valid: passwordRegex.test(form.value.password),
+      message: 'Min 8 chars, must include letter and number'
+    },
+    confirmPassword: {
+      valid: form.value.password === confirmPassword.value && confirmPassword.value !== '',
+      message: 'Passwords must match exactly'
+    }
+  };
+});
+
 const isStep2Valid = computed(() => {
-  return form.value.username.length >= 3 && 
-         form.value.email.includes('@') && 
-         form.value.age >= 13;
+  return validation.value.username.valid && 
+         validation.value.email.valid && 
+         validation.value.age.valid;
 });
 
 const isStep3Valid = computed(() => {
-  return form.value.password.length >= 8 && 
-         form.value.password === confirmPassword.value;
+  return validation.value.password.valid && 
+         validation.value.confirmPassword.valid;
 });
 
 const handleDetection = (data) => {
@@ -236,17 +304,17 @@ const handleRegister = async () => {
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: var(--bg-black);
+  background: var(--bg-app);
 }
 
 .auth-card {
   width: 100%;
   max-width: 480px;
   background: var(--card-black);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
   border-radius: 32px;
   padding: 3rem;
-  box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+  box-shadow: 0 40px 100px var(--shadow-color);
   position: relative;
   overflow: hidden;
 }
@@ -266,7 +334,7 @@ const handleRegister = async () => {
   left: 30px;
   right: 30px;
   height: 2px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--border-color);
   z-index: 1;
 }
 
@@ -290,8 +358,8 @@ const handleRegister = async () => {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #111;
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: var(--card-black);
+  border: 2px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -304,13 +372,13 @@ const handleRegister = async () => {
 .step-item.active .step-number {
   border-color: var(--accent-green);
   color: var(--accent-green);
-  box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+  box-shadow: 0 0 20px rgba(var(--accent-green-rgb), 0.2);
 }
 
 .step-item.completed .step-number {
   background: var(--accent-green);
   border-color: var(--accent-green);
-  color: #000;
+  color: var(--bg-black);
 }
 
 .step-text {
@@ -322,7 +390,7 @@ const handleRegister = async () => {
 }
 
 .step-item.active .step-text {
-  color: #fff;
+  color: var(--text-main);
 }
 
 /* Header */
@@ -365,7 +433,7 @@ const handleRegister = async () => {
   aspect-ratio: 1;
   border-radius: 24px;
   overflow: hidden;
-  border: 1px solid rgba(0, 255, 136, 0.2);
+  border: 1px solid var(--border-color);
   position: relative;
   background: #000;
 }
@@ -408,7 +476,7 @@ const handleRegister = async () => {
 
 .retry-link {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   color: var(--text-dim);
   padding: 0.5rem 1rem;
   border-radius: 6px;
@@ -419,8 +487,8 @@ const handleRegister = async () => {
 }
 
 .retry-link:hover {
-  border-color: #fff;
-  color: #fff;
+  border-color: var(--text-main);
+  color: var(--text-main);
 }
 
 /* Form Styles */
@@ -455,11 +523,11 @@ label {
 
 input, select {
   width: 100%;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
   padding: 1rem;
   border-radius: 12px;
-  color: #fff;
+  color: var(--text-main);
   font-size: 0.9rem;
   transition: all 0.3s;
   box-sizing: border-box;
@@ -468,7 +536,7 @@ input, select {
 input:focus, select:focus {
   outline: none;
   border-color: var(--accent-green);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(var(--accent-green-rgb), 0.05);
 }
 
 /* Action Bar */
@@ -481,7 +549,7 @@ input:focus, select:focus {
 .next-btn, .submit-btn {
   flex: 2;
   background: var(--accent-green);
-  color: #000;
+  color: var(--bg-black);
   border: none;
   padding: 1.1rem;
   border-radius: 14px;
@@ -503,9 +571,9 @@ input:focus, select:focus {
 
 .back-btn {
   flex: 1;
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--glass);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
   padding: 1.1rem;
   border-radius: 14px;
   font-weight: 800;
@@ -514,7 +582,7 @@ input:focus, select:focus {
 }
 
 .back-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--border-color);
 }
 
 .error-msg {
@@ -531,7 +599,7 @@ input:focus, select:focus {
 .auth-footer {
   margin-top: 3rem;
   padding-top: 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--border-color);
   text-align: center;
 }
 
@@ -551,6 +619,51 @@ input:focus, select:focus {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.error-icon {
+  position: absolute;
+  right: 12px;
+  color: #ff4444;
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+.field-error {
+  font-size: 0.6rem;
+  color: #ff4444;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.form-group.has-error input {
+  border-color: rgba(255, 68, 68, 0.5);
+  background: rgba(255, 68, 68, 0.02);
+}
+
+.form-group.has-error input:focus {
+  border-color: #ff4444;
+  box-shadow: 0 0 10px rgba(255, 68, 68, 0.1);
+}
+
+.fade-in-enter-active {
+  transition: all 0.2s ease-out;
+}
+.fade-in-enter-from {
+  opacity: 0;
+  transform: translateY(-5px);
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
 }
 
 @media (max-width: 480px) {

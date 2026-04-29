@@ -13,29 +13,37 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // 2. Username Validation (Alphanumeric, 3-20 chars)
-  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+  // 2. Username Validation
+  // - 3 to 20 characters
+  // - Starts with a letter
+  // - Can contain alphanumeric characters, underscores, and dots
+  // - Cannot have consecutive dots or underscores
+  // - Cannot end with a dot or underscore
+  const usernameRegex = /^[a-zA-Z](?:[a-zA-Z0-9._](?![._])){1,18}[a-zA-Z0-9]$/;
   if (!usernameRegex.test(username)) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Username must be 3-20 alphanumeric characters or underscores',
+      statusMessage: 'Username must be 3-20 characters, start with a letter, and contain only letters, numbers, dots, or underscores (no consecutive or trailing symbols).',
     });
   }
 
   // 3. Email Validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (!emailRegex.test(email)) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Invalid email format',
+      statusMessage: 'Please provide a valid email address.',
     });
   }
 
-  // 4. Password Strength (Min 8 chars)
-  if (password.length < 8) {
+  // 4. Password Strength
+  // - Min 8 characters
+  // - At least one letter and one number
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
+  if (!passwordRegex.test(password)) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Password must be at least 8 characters long',
+      statusMessage: 'Password must be at least 8 characters and include both letters and numbers.',
     });
   }
 

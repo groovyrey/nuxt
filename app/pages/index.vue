@@ -171,7 +171,7 @@ watch(isLoading, (loading) => {
   gap: 1.5rem;
   margin-bottom: 2rem;
   padding-bottom: 2rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-dim);
 }
 
 .avatar-placeholder {
@@ -184,7 +184,7 @@ watch(isLoading, (loading) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 30px rgba(0, 255, 136, 0.2);
+  box-shadow: 0 0 30px rgba(var(--accent-green-rgb), 0.2);
 }
 
 .avatar-overlay {
@@ -235,10 +235,10 @@ watch(isLoading, (loading) => {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--glass);
   padding: 1rem;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-dim);
 }
 
 .detail-item label {
@@ -259,7 +259,7 @@ watch(isLoading, (loading) => {
 
 .glass-header {
   padding: 1.5rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-color);
   margin-bottom: 2rem;
   display: flex;
   justify-content: space-between;
@@ -277,7 +277,7 @@ watch(isLoading, (loading) => {
 .status-dot {
   width: 8px;
   height: 8px;
-  background: #333;
+  background: var(--text-dim);
   border-radius: 50%;
 }
 
@@ -318,8 +318,8 @@ h1 {
 
 .logout-btn {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
   padding: 0.5rem 0.8rem;
   border-radius: 6px;
   font-size: 0.65rem;
@@ -346,7 +346,7 @@ h1 {
 
 .vision-card {
   background: var(--card-black);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-dim);
   border-radius: 20px;
   padding: 2rem;
   display: flex;
@@ -354,6 +354,7 @@ h1 {
   min-height: 400px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 10px 30px var(--shadow-color);
 }
 
 .info-sidebar {
@@ -364,15 +365,16 @@ h1 {
 
 .status-item {
   background: var(--card-black);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-dim);
   padding: 1rem;
   border-radius: 12px;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 12px var(--shadow-color);
 }
 
 .status-item.highlight {
   border-color: var(--accent-green);
-  background: rgba(0, 255, 136, 0.02);
+  background: rgba(var(--accent-green-rgb), 0.02);
 }
 
 .status-item label {
@@ -388,7 +390,7 @@ h1 {
 .status-item .value {
   font-family: monospace;
   font-size: 0.85rem;
-  color: #fff;
+  color: var(--text-main);
 }
 
 .danger-zone {
@@ -446,9 +448,9 @@ h1 {
 
 .delete-btn-cancel {
   flex: 1;
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--glass);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
   padding: 0.5rem;
   border-radius: 6px;
   font-size: 0.6rem;
@@ -477,7 +479,7 @@ h1 {
 }
 
 .system-footer p {
-  color: #444;
+  color: var(--text-dim);
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -487,13 +489,13 @@ h1 {
 .footer-icons {
   display: flex;
   gap: 1rem;
-  color: #444;
+  color: var(--text-dim);
 }
 
 .spinner {
   width: 24px;
   height: 24px;
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid var(--border-color);
   border-top-color: var(--accent-green);
   border-radius: 50%;
   animation: spin 1s linear infinite;

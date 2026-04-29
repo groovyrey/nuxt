@@ -315,7 +315,7 @@ canvas {
 .guide-oval {
   width: 60%;
   height: 70%;
-  border: 2px dashed rgba(0, 255, 136, 0.4);
+  border: 2px dashed rgba(var(--accent-green-rgb), 0.4);
   border-radius: 50% / 45%;
   position: relative;
   box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.4);
@@ -328,7 +328,7 @@ canvas {
   font-size: 0.6rem;
   font-weight: 800;
   letter-spacing: 0.15em;
-  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+  text-shadow: 0 0 10px rgba(var(--accent-green-rgb), 0.5);
 }
 
 .corner {
@@ -365,5 +365,5 @@ canvas {
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .accent { color: var(--accent-green); }
-.hint { color: #444; font-size: 0.6rem; letter-spacing: 0.1em; }
+.hint { color: var(--text-dim); font-size: 0.6rem; letter-spacing: 0.1em; }
 </style>

@@ -1,13 +1,14 @@
 import { useDb } from '../../utils/db';
-import { getSession, deleteSession } from '../../utils/auth';
+import { getAuthSession, deleteSession } from '../../utils/auth';
 
 export default defineEventHandler(async (event) => {
   const sessionId = getCookie(event, 'auth_session');
+
   if (!sessionId) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
   }
 
-  const session = await getSession(sessionId);
+  const session = await getAuthSession(sessionId);
   if (!session) {
     throw createError({ statusCode: 401, statusMessage: 'Session expired' });
   }

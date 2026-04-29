@@ -1,13 +1,13 @@
-import { getSession } from '../../utils/auth';
+import { getAuthSession } from '../../utils/auth';
 
 export default defineEventHandler(async (event) => {
   const sessionId = getCookie(event, 'auth_session');
-  
+
   if (!sessionId) {
-    return { user: null };
+    return null;
   }
 
-  const session = await getSession(sessionId);
+  const session = await getAuthSession(sessionId);
   if (!session) {
     deleteCookie(event, 'auth_session');
     return { user: null };

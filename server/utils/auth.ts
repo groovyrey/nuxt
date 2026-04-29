@@ -23,7 +23,7 @@ export const createSession = async (username: string) => {
   return sessionId;
 };
 
-export const getSession = async (sessionId: string) => {
+export const getAuthSession = async (sessionId: string) => {
   const db = useDb();
   const [rows] = await db.execute(
     'SELECT s.*, u.email, u.gender, u.age FROM sessions s JOIN users u ON s.username = u.username WHERE s.id = ? AND s.expires_at > NOW()',
