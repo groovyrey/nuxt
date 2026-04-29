@@ -9,7 +9,7 @@
         <p class="subtitle">System Authentication Required</p>
       </header>
 
-      <div class="auth-tabs" v-if="loginStep === 'initial'">
+      <div class="auth-tabs" v-if="loginStep === 'password'">
         <div class="step-indicator">
           <span class="step active">1</span>
           <div class="step-line"></div>
@@ -162,8 +162,9 @@ const handleFaceDetection = async (data) => {
       await fetchUser();
       navigateTo('/');
     } catch (err) {
-      if (err.statusCode !== 401) {
-        error.value = err.data?.statusMessage || 'Biometric verification failed';
+      error.value = err.data?.statusMessage || 'Biometric verification failed';
+      if (detectorRef.value) {
+        detectorRef.value.stopCamera();
       }
     } finally {
       loading.value = false;
