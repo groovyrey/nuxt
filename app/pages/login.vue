@@ -163,12 +163,16 @@ const handleFaceDetection = async (data) => {
       await fetchUser();
       navigateTo('/');
     } catch (err) {
-      // Failure: Stop camera and show error
+      // Failure: Show visual error on frame and message
       console.warn('Biometric verification failed:', err);
       error.value = err.data?.statusMessage || 'Biometric verification failed';
       
       if (detectorRef.value) {
-        detectorRef.value.stopCamera();
+        detectorRef.value.triggerError();
+        // Delay camera stop slightly so user sees the red error frame
+        setTimeout(() => {
+          if (detectorRef.value) detectorRef.value.stopCamera();
+        }, 2000);
       }
     } finally {
       loading.value = false;

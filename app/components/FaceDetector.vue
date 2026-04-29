@@ -5,7 +5,8 @@ import {
   AlertTriangle as AlertTriangleIcon, 
   Camera as CameraIcon, 
   Scan as ScanIcon,
-  Loader2 as Loader2Icon
+  Loader2 as Loader2Icon,
+  XCircle as XCircleIcon
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -20,28 +21,21 @@ const canvasRef = ref<HTMLCanvasElement | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const isCameraStarted = ref(false);
+const isErrorState = ref(false);
 
 const emit = defineEmits(['detected']);
 
 const loadModels = async () => {
   try {
     const MODEL_URL = window.location.origin + '/models';
-    
-    // Core models always needed
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
     await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
     await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
     
-    if (props.minimal) {
-      // Light model for Login (High FPS)
-      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-    } else {
-      // Heavy models for Registration (High Accuracy)
-      await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+    if (!props.minimal) {
       await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
       await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
     }
-    
-    console.log(`Neural Engine: ${props.minimal ? 'Performance Mode' : 'Precision Mode'}`);
   } catch (err: any) {
     console.error('Error loading models:', err);
     error.value = 'Neural Engine initialization failed.';
@@ -50,10 +44,11 @@ const loadModels = async () => {
 
 const startVideo = async () => {
   try {
+    isErrorState.value = false;
     const stream = await navigator.mediaDevices.getUserMedia({ 
       video: { 
         facingMode: 'user',
-        width: { ideal: 640 }, // Lower resolution for better performance on mobile
+        width: { ideal: 640 }, 
         height: { ideal: 480 }
       } 
     });
@@ -65,6 +60,11 @@ const startVideo = async () => {
   } catch (err) {
     error.value = 'Camera access denied.';
   }
+};
+
+const triggerError = () => {
+  isErrorState.value = true;
+  // Keep the last frame visible for a moment but stop processing
 };
 
 const handleVideoPlay = () => {
@@ -82,7 +82,7 @@ const handleVideoPlay = () => {
   let displaySize = updateDimensions();
 
   const detect = async () => {
-    if (!videoRef.value || !canvasRef.value || !isCameraStarted.value || isDetecting) {
+    if (!videoRef.value || !canvasRef.value || !isCameraStarted.value || isDetecting || isErrorState.value) {
       requestAnimationFrame(detect);
       return;
     }
@@ -95,14 +95,8 @@ const handleVideoPlay = () => {
         displaySize = updateDimensions();
       }
 
-      // Optimization: use the lightweight detector for login
-      const options = props.minimal 
-        ? new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 })
-        : new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
-
-      let task: any = faceapi.detectSingleFace(videoRef.value, options)
-        .withFaceLandmarks()
-        .withFaceDescriptor();
+      const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 });
+      let task: any = faceapi.detectSingleFace(videoRef.value, options).withFaceLandmarks().withFaceDescriptor();
 
       if (!props.minimal) {
         task = task.withFaceExpressions().withAgeAndGender();
@@ -116,8 +110,6 @@ const handleVideoPlay = () => {
 
         if (ctx) {
           ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
-          
-          // The "Wire"
           faceapi.draw.drawFaceLandmarks(canvasRef.value, resizedDetection);
           
           if (!props.minimal) {
@@ -127,7 +119,7 @@ const handleVideoPlay = () => {
 
           if (detection.descriptor) {
             const payload: any = { descriptor: Array.from(detection.descriptor) };
-            if (!props.minimal) {
+            if (!props.minimal && (detection as any).age) {
               payload.age = Math.round((detection as any).age);
               payload.gender = (detection as any).gender;
               payload.expression = Object.entries((detection as any).expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
@@ -164,12 +156,12 @@ const stopCamera = () => {
   }
 };
 
-defineExpose({ stopCamera });
+defineExpose({ stopCamera, triggerError });
 onUnmounted(() => stopCamera());
 </script>
 
 <template>
-  <div class="face-detector-container">
+  <div class="face-detector-container" :class="{ 'is-error': isErrorState }">
     <div v-if="error" class="error-toast">
       <AlertTriangleIcon :size="18" />
       <span>{{ error }}</span>
@@ -193,9 +185,21 @@ onUnmounted(() => stopCamera());
     </div>
 
     <div class="video-container" v-show="isCameraStarted">
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+
       <video ref="videoRef" autoplay muted playsinline @play="handleVideoPlay"></video>
       <canvas ref="canvasRef"></canvas>
-      <div class="scanning-line"></div>
+      
+      <div class="scanning-line" v-if="!isErrorState"></div>
+      
+      <div v-if="isErrorState" class="error-overlay">
+        <XCircleIcon :size="48" color="#ff4444" />
+        <p>ACCESS DENIED</p>
+        <span class="sub">IDENTITY MISMATCH</span>
+      </div>
     </div>
   </div>
 </template>
@@ -211,21 +215,6 @@ onUnmounted(() => stopCamera());
   position: relative;
   background: #000;
   overflow: hidden;
-}
-
-.error-toast {
-  position: absolute;
-  top: 1rem;
-  background: #ff0044;
-  color: white;
-  padding: 0.8rem 1.2rem;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 90%;
 }
 
 .setup-screen {
@@ -295,6 +284,22 @@ canvas {
   transform: scaleX(-1);
 }
 
+.corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--accent-green);
+  z-index: 10;
+  transition: border-color 0.3s;
+}
+
+.tl { top: 15px; left: 15px; border-right: none; border-bottom: none; }
+.tr { top: 15px; right: 15px; border-left: none; border-bottom: none; }
+.bl { bottom: 15px; left: 15px; border-right: none; border-top: none; }
+.br { bottom: 15px; right: 15px; border-left: none; border-top: none; }
+
+.is-error .corner { border-color: #ff4444; }
+
 .scanning-line {
   position: absolute;
   top: 0;
@@ -304,11 +309,45 @@ canvas {
   background: var(--accent-green);
   box-shadow: 0 0 15px var(--accent-green);
   animation: scan 3s linear infinite;
+  z-index: 5;
 }
 
 @keyframes scan {
   0% { top: 0%; }
   100% { top: 100%; }
+}
+
+.error-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  backdrop-filter: saturate(0.5);
+  animation: blink 0.5s step-end 2;
+}
+
+@keyframes blink {
+  50% { background: rgba(255, 0, 0, 0.3); }
+}
+
+.error-overlay p {
+  color: #ff4444;
+  font-weight: 900;
+  letter-spacing: 0.3em;
+  font-size: 1.2rem;
+  margin: 1rem 0 0.2rem;
+}
+
+.error-overlay .sub {
+  color: #ff4444;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  opacity: 0.8;
 }
 
 .spin { animation: spin 1s linear infinite; }

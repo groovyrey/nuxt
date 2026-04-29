@@ -68,6 +68,27 @@
           <label><CpuIcon :size="10" /> NETWORK</label>
           <span class="value">ENCRYPTED GRID</span>
         </div>
+
+        <!-- Danger Zone -->
+        <div class="status-item danger-zone">
+          <label><Trash2Icon :size="10" /> DANGER ZONE</label>
+          <div v-if="!confirmDeletion">
+            <button @click="confirmDeletion = true" class="delete-btn-trigger">
+              DELETE PROFILE
+            </button>
+          </div>
+          <div v-else class="confirmation-box">
+            <p>IRREVERSIBLE ACTION</p>
+            <div class="confirm-actions">
+              <button @click="handleDeleteAccount" class="delete-btn-confirm" :disabled="deleting">
+                {{ deleting ? 'DELETING...' : 'CONFIRM' }}
+              </button>
+              <button @click="confirmDeletion = false" class="delete-btn-cancel" :disabled="deleting">
+                CANCEL
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
 
@@ -100,11 +121,28 @@ import {
   Activity as ActivityIcon,
   Cpu as CpuIcon,
   Github as GithubIcon,
-  Twitter as TwitterIcon
+  Twitter as TwitterIcon,
+  Trash2 as Trash2Icon
 } from 'lucide-vue-next';
 
 const { user, isLoading, logout } = useAuth();
 const isOnline = ref(true)
+const confirmDeletion = ref(false)
+const deleting = ref(false)
+
+const handleDeleteAccount = async () => {
+  deleting.value = true;
+  try {
+    await $fetch('/api/auth/me', { method: 'DELETE' });
+    user.value = null;
+    navigateTo('/login');
+  } catch (e) {
+    console.error('Failed to delete account:', e);
+    alert('Failed to delete account. Please try again.');
+    deleting.value = false;
+    confirmDeletion.value = false;
+  }
+};
 
 watch(isLoading, (loading) => {
   if (!loading && !user.value) {
@@ -351,6 +389,71 @@ h1 {
   font-family: monospace;
   font-size: 0.85rem;
   color: #fff;
+}
+
+.danger-zone {
+  border-color: rgba(255, 68, 68, 0.2);
+  margin-top: auto;
+}
+
+.delete-btn-trigger {
+  width: 100%;
+  background: transparent;
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  color: #ff4444;
+  padding: 0.6rem;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.delete-btn-trigger:hover {
+  background: rgba(255, 68, 68, 0.1);
+  border-color: #ff4444;
+}
+
+.confirmation-box {
+  text-align: center;
+}
+
+.confirmation-box p {
+  color: #ff4444;
+  font-size: 0.6rem;
+  font-weight: 900;
+  margin: 0.5rem 0;
+  letter-spacing: 0.1em;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.delete-btn-confirm {
+  flex: 1;
+  background: #ff4444;
+  color: #000;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.delete-btn-cancel {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .system-footer {
