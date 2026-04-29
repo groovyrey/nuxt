@@ -1,5 +1,5 @@
 import { useDb } from '../../utils/db';
-import { createSession, findMatchingUserByFace, euclideanDistance, EUCLIDEAN_THRESHOLD } from '../../utils/auth';
+import { createSession, findMatchingUserByFace, euclideanDistance, EUCLIDEAN_THRESHOLD, parseDescriptor } from '../../utils/auth';
 
 export default defineEventHandler(async (event) => {
   try {
@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
     if (!faceDescriptor || !Array.isArray(faceDescriptor)) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Invalid or missing face descriptor',
+        statusMessage: 'Invalid or missing biometric signature',
       });
     }
 
@@ -27,24 +27,27 @@ export default defineEventHandler(async (event) => {
       if (users.length === 0) {
         throw createError({
           statusCode: 404,
-          statusMessage: 'User biometric profile not found',
+          statusMessage: 'Biometric profile not found for this user',
         });
       }
 
       const user = users[0];
-      let storedDescriptor;
-      if (typeof user.face_descriptor === 'string') {
-        storedDescriptor = JSON.parse(user.face_descriptor);
-      } else {
-        storedDescriptor = user.face_descriptor;
+      const storedDescriptor = parseDescriptor(user.face_descriptor);
+
+      if (!storedDescriptor) {
+        throw createError({
+          statusCode: 500,
+          statusMessage: 'Stored biometric profile is corrupted',
+        });
       }
 
       const distance = euclideanDistance(faceDescriptor, storedDescriptor);
+      console.log(`Face Login [2FA]: User=${targetUsername}, Distance=${distance.toFixed(4)}, Threshold=${EUCLIDEAN_THRESHOLD}`);
 
       if (distance >= EUCLIDEAN_THRESHOLD) {
         throw createError({
           statusCode: 401,
-          statusMessage: 'Biometric verification failed',
+          statusMessage: 'Biometric verification failed: identity mismatch',
         });
       }
       finalUsername = user.username;
@@ -55,7 +58,7 @@ export default defineEventHandler(async (event) => {
       if (!matchedUser) {
         throw createError({
           statusCode: 401,
-          statusMessage: 'Face not recognized',
+          statusMessage: 'Biometric signature not recognized',
         });
       }
       finalUsername = matchedUser.username;
@@ -76,7 +79,7 @@ export default defineEventHandler(async (event) => {
     if (error.statusCode) throw error;
     throw createError({
       statusCode: 500,
-      statusMessage: 'Internal server error during face authentication',
+      statusMessage: 'Neural engine error during authentication',
     });
   }
 });

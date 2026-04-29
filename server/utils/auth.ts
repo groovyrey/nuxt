@@ -41,8 +41,38 @@ export const deleteSession = async (sessionId: string) => {
 
 export const EUCLIDEAN_THRESHOLD = 0.6;
 
+export function parseDescriptor(d: any): number[] | null {
+  if (!d) return null;
+  try {
+    let parsed = d;
+    // Handle Buffer (sometimes returned by DB drivers)
+    if (typeof d === 'object' && d !== null && 'type' in d && d.type === 'Buffer') {
+      parsed = Buffer.from(d.data).toString('utf8');
+    } else if (Buffer.isBuffer(d)) {
+      parsed = d.toString('utf8');
+    }
+    
+    // Handle Stringified JSON
+    if (typeof parsed === 'string') {
+      parsed = JSON.parse(parsed);
+    }
+    
+    // Ensure it is an array of numbers
+    if (Array.isArray(parsed)) {
+      return parsed.map(Number);
+    }
+    return null;
+  } catch (e) {
+    console.error('Error parsing face descriptor:', e);
+    return null;
+  }
+}
+
 export function euclideanDistance(arr1: number[], arr2: number[]) {
-  if (arr1.length !== arr2.length) return Infinity;
+  if (!arr1 || !arr2 || arr1.length !== arr2.length || arr1.length === 0) {
+    console.warn(`Euclidean distance mismatch: arr1(${arr1?.length}) vs arr2(${arr2?.length})`);
+    return Infinity;
+  }
   let sum = 0;
   for (let i = 0; i < arr1.length; i++) {
     sum += Math.pow(arr1[i] - arr2[i], 2);
@@ -59,26 +89,19 @@ export const findMatchingUserByFace = async (faceDescriptor: number[]) => {
   let minDistance = Infinity;
 
   for (const user of users) {
-    try {
-      let storedDescriptor;
-      if (typeof user.face_descriptor === 'string') {
-        storedDescriptor = JSON.parse(user.face_descriptor);
-      } else {
-        storedDescriptor = user.face_descriptor;
-      }
+    const storedDescriptor = parseDescriptor(user.face_descriptor);
+    if (!storedDescriptor) continue;
 
-      if (!Array.isArray(storedDescriptor)) continue;
-
-      const distance = euclideanDistance(faceDescriptor, storedDescriptor);
-      
-      if (distance < minDistance && distance < EUCLIDEAN_THRESHOLD) {
-        minDistance = distance;
-        matchedUser = user;
-      }
-    } catch (parseError) {
-      console.error(`Error parsing descriptor for user ${user.username}:`, parseError);
-      continue;
+    const distance = euclideanDistance(faceDescriptor, storedDescriptor);
+    
+    if (distance < minDistance && distance < EUCLIDEAN_THRESHOLD) {
+      minDistance = distance;
+      matchedUser = user;
     }
+  }
+
+  if (matchedUser) {
+    console.log(`Matched user ${matchedUser.username} with distance ${minDistance}`);
   }
 
   return matchedUser;

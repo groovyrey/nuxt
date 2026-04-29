@@ -1,5 +1,5 @@
 import { useDb } from '../../utils/db';
-import { hashPassword, createSession, findMatchingUserByFace } from '../../utils/auth';
+import { hashPassword, createSession, findMatchingUserByFace, parseDescriptor } from '../../utils/auth';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);

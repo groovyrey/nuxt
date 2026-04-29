@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as faceapi from '@vladmandic/face-api';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { 
   AlertTriangle as AlertTriangleIcon, 
   Camera as CameraIcon, 
@@ -8,13 +8,18 @@ import {
   Loader2 as Loader2Icon
 } from 'lucide-vue-next';
 
+const props = defineProps({
+  minimal: {
+    type: Boolean,
+    default: false
+  }
+});
+
 const videoRef = ref<HTMLVideoElement | null>(null);
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const isCameraStarted = ref(false);
-
-let detectionInterval: number | null = null;
 
 const emit = defineEmits(['detected']);
 
@@ -23,14 +28,16 @@ const loadModels = async () => {
     const MODEL_URL = window.location.origin + '/models';
     console.log('Attempting to load models from:', MODEL_URL);
     
-    // Using SSD Mobilenet V1 for much better biometric accuracy
     await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
     await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
     await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-    await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
     
-    console.log('High-precision models loaded');
+    if (!props.minimal) {
+      await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+      await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
+    }
+    
+    console.log(`Neural Engine initialized (Mode: ${props.minimal ? 'Minimal' : 'Full'})`);
   } catch (err: any) {
     console.error('Error loading models:', err);
     error.value = `Neural Engine Error: ${err.message || 'Check network connection'}`;
@@ -53,7 +60,7 @@ const startVideo = async () => {
     }
   } catch (err) {
     console.error('Error starting video:', err);
-    error.value = 'Biometric sensor access denied. Check permissions.';
+    error.value = 'Biometric sensor access denied.';
   }
 };
 
@@ -62,12 +69,15 @@ const handleVideoPlay = () => {
 
   const updateDimensions = () => {
     if (!videoRef.value || !canvasRef.value) return;
-    const size = {
+    
+    // Use offsetDimensions of the video element for landmark mapping
+    const displaySize = {
       width: videoRef.value.offsetWidth,
       height: videoRef.value.offsetHeight,
     };
-    faceapi.matchDimensions(canvasRef.value, size);
-    return size;
+    
+    faceapi.matchDimensions(canvasRef.value, displaySize);
+    return displaySize;
   };
 
   let isDetecting = false;
@@ -84,19 +94,21 @@ const handleVideoPlay = () => {
     frameCount++;
 
     try {
+      // Re-calculate if size changed (e.g. rotation)
       if (videoRef.value.offsetWidth !== displaySize?.width) {
         displaySize = updateDimensions();
       }
 
-      // detectSingleFace is much faster and more accurate for authentication
-      const detection = await faceapi.detectSingleFace(
+      let task: any = faceapi.detectSingleFace(
         videoRef.value,
         new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 })
-      )
-      .withFaceLandmarks()
-      .withFaceDescriptor()
-      .withFaceExpressions()
-      .withAgeAndGender();
+      ).withFaceLandmarks().withFaceDescriptor();
+
+      if (!props.minimal) {
+        task = task.withFaceExpressions().withAgeAndGender();
+      }
+
+      const detection = await task;
 
       if (detection) {
         const resizedDetection = faceapi.resizeResults(detection, displaySize!);
@@ -104,21 +116,25 @@ const handleVideoPlay = () => {
 
         if (ctx) {
           ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
-          faceapi.draw.drawDetections(canvasRef.value, resizedDetection);
           faceapi.draw.drawFaceLandmarks(canvasRef.value, resizedDetection);
-          faceapi.draw.drawFaceExpressions(canvasRef.value, resizedDetection);
-
-          const expression = Object.entries(detection.expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
+          
+          if (!props.minimal) {
+            faceapi.draw.drawDetections(canvasRef.value, resizedDetection);
+            faceapi.draw.drawFaceExpressions(canvasRef.value, resizedDetection);
+          }
 
           if (detection.descriptor) {
-            if (frameCount % 5 === 0) console.log('BIOMETRIC SUCCESS: Descriptor generated');
-            emit('detected', {
-              age: Math.round(detection.age),
-              gender: detection.gender,
-              genderProbability: Math.round(detection.genderProbability * 100),
-              expression: expression,
+            const payload: any = {
               descriptor: Array.from(detection.descriptor)
-            });
+            };
+
+            if (!props.minimal && (detection as any).age) {
+              payload.age = Math.round((detection as any).age);
+              payload.gender = (detection as any).gender;
+              payload.expression = Object.entries((detection as any).expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
+            }
+
+            emit('detected', payload);
           }
         }
       } else {
@@ -215,6 +231,7 @@ onUnmounted(() => {
   align-items: center;
   position: relative;
   background: #000;
+  overflow: hidden;
 }
 
 .error-toast {
@@ -315,10 +332,10 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   height: 100%;
-  line-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #000;
 }
 
 .corner {
@@ -337,8 +354,7 @@ onUnmounted(() => {
 video {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  filter: grayscale(0.2) contrast(1.1);
+  object-fit: cover; /* Use cover to fill the square/circle portal */
   transform: scaleX(-1);
 }
 

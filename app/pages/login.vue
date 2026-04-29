@@ -64,7 +64,7 @@
 
           <div class="face-scanner-wrapper">
             <ClientOnly>
-              <FaceDetector ref="detectorRef" @detected="handleFaceDetection" />
+              <FaceDetector ref="detectorRef" minimal @detected="handleFaceDetection" />
             </ClientOnly>
             <div class="scan-overlay">
               <div class="scan-line"></div>
@@ -147,6 +147,7 @@ const handleFaceDetection = async (data) => {
     loading.value = true;
     error.value = '';
     try {
+      console.log('Sending biometric signature for verification...');
       await $fetch('/api/auth/face-login', {
         method: 'POST',
         body: { 
@@ -155,14 +156,17 @@ const handleFaceDetection = async (data) => {
         }
       });
       
+      // Success: Stop camera and navigate
       if (detectorRef.value) {
         detectorRef.value.stopCamera();
       }
-
       await fetchUser();
       navigateTo('/');
     } catch (err) {
+      // Failure: Stop camera and show error
+      console.warn('Biometric verification failed:', err);
       error.value = err.data?.statusMessage || 'Biometric verification failed';
+      
       if (detectorRef.value) {
         detectorRef.value.stopCamera();
       }
