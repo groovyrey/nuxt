@@ -24,8 +24,26 @@ const canvasRef = ref<HTMLCanvasElement | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const isCameraStarted = ref(false);
+const faceDetected = ref(false);
+const faceTooFar = ref(false);
 
-const emit = defineEmits(['detected']);
+const emit = defineEmits(['detected', 'sampling-progress']);
+
+const isSampling = ref(false);
+const samples = ref<number[][]>([]);
+const REQUIRED_SAMPLES = 12;
+
+const averageDescriptors = (descriptors: number[][]) => {
+  if (descriptors.length === 0) return null;
+  const length = descriptors[0].length;
+  const avg = new Array(length).fill(0);
+  for (const d of descriptors) {
+    for (let i = 0; i < length; i++) {
+      avg[i] += d[i];
+    }
+  }
+  return avg.map(v => v / descriptors.length);
+};
 
 const loadModels = async () => {
   try {
@@ -87,7 +105,9 @@ const handleVideoPlay = () => {
   let frameCount = 0;
   let displaySize = updateDimensions();
   let lastDetectionTime = 0;
-  const DETECTION_THROTTLE = 150; // ms
+  let lastSampleTime = 0;
+  const DETECTION_THROTTLE = 100; // ms
+  const SAMPLE_THROTTLE = 200; // ms
 
   const detect = async () => {
     if (!videoRef.value || !canvasRef.value || !isCameraStarted.value || isDetecting) {
@@ -110,7 +130,7 @@ const handleVideoPlay = () => {
         displaySize = updateDimensions();
       }
 
-      const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.7 });
+      const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
       let task: any = faceapi.detectSingleFace(videoRef.value, options).withFaceLandmarks().withFaceDescriptor();
 
       if (!props.minimal) {
@@ -122,27 +142,82 @@ const handleVideoPlay = () => {
       if (ctx) ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
 
       if (detection) {
-        // Only accept detection if it's reasonably large (not a background face)
+        faceDetected.value = true;
+        // Draw landmarks for "pro" look
+        const resizedDetection = faceapi.resizeResults(detection, displaySize!);
+        if (ctx) {
+          ctx.fillStyle = 'rgba(0, 255, 136, 0.5)';
+          resizedDetection.landmarks.positions.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 1, 0, 2 * Math.PI);
+            ctx.fill();
+          });
+        }
+
         const box = detection.detection.box;
         const faceArea = box.width * box.height;
-        const frameArea = displaySize.width * displaySize.height;
+        const frameArea = displaySize!.width * displaySize!.height;
         const coverage = faceArea / frameArea;
 
-        if (coverage < 0.2) {
+        if (coverage < 0.1) {
+          faceTooFar.value = true;
           if (frameCount % 10 === 0) emit('detected', null);
           return;
         }
+        faceTooFar.value = false;
 
-        if (ctx && detection.descriptor) {
-          const payload: any = { descriptor: Array.from(detection.descriptor) };
-          if (!props.minimal && (detection as any).age) {
-            payload.age = Math.round((detection as any).age);
-            payload.gender = (detection as any).gender;
-            payload.expression = Object.entries((detection as any).expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
+        if (detection.descriptor) {
+          if (!isSampling.value && samples.value.length < REQUIRED_SAMPLES) {
+            isSampling.value = true;
           }
-          emit('detected', payload);
+
+          if (isSampling.value) {
+            const now = Date.now();
+            if (now - lastSampleTime >= SAMPLE_THROTTLE) {
+              samples.value.push(Array.from(detection.descriptor));
+              lastSampleTime = now;
+              emit('sampling-progress', (samples.value.length / REQUIRED_SAMPLES) * 100);
+
+              if (samples.value.length >= REQUIRED_SAMPLES) {
+                isSampling.value = false;
+                
+                // We send multiple samples to server for multi-point matching
+                // AND capture a high-quality frame for CompreFace
+                const canvas = document.createElement('canvas');
+                if (videoRef.value) {
+                  canvas.width = videoRef.value.videoWidth;
+                  canvas.height = videoRef.value.videoHeight;
+                  const ctx = canvas.getContext('2d');
+                  if (ctx) {
+                    // Mirror if needed (video is mirrored in UI)
+                    ctx.translate(canvas.width, 0);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(videoRef.value, 0, 0);
+                  }
+                }
+
+                const payload: any = { 
+                  descriptor: samples.value,
+                  image: canvas.toDataURL('image/jpeg', 0.9),
+                  isFinal: true
+                };
+
+                if (!props.minimal && (detection as any).age) {
+                  payload.age = Math.round((detection as any).age);
+                  payload.gender = (detection as any).gender;
+                  payload.expression = Object.entries((detection as any).expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0];
+                }
+                emit('detected', payload);
+              }
+            }
+          } else if (samples.value.length === 0) {
+            const payload: any = { descriptor: [Array.from(detection.descriptor)] };
+            emit('detected', payload);
+          }
         }
       } else {
+        faceDetected.value = false;
+        faceTooFar.value = false;
         if (frameCount % 10 === 0) emit('detected', null);
       }
     } catch (err) {
@@ -161,16 +236,25 @@ onMounted(async () => {
   isLoading.value = false;
 });
 
+const resetSampling = () => {
+  samples.value = [];
+  isSampling.value = false;
+  faceDetected.value = false;
+  faceTooFar.value = false;
+  emit('sampling-progress', 0);
+};
+
 const stopCamera = () => {
   if (videoRef.value && videoRef.value.srcObject) {
     const stream = videoRef.value.srcObject as MediaStream;
     stream.getTracks().forEach(track => track.stop());
     videoRef.value.srcObject = null;
-    isCameraStarted.value = false;
   }
+  isCameraStarted.value = false;
+  resetSampling();
 };
 
-defineExpose({ stopCamera });
+defineExpose({ stopCamera, resetSampling, startVideo });
 onUnmounted(() => stopCamera());
 </script>
 
@@ -211,15 +295,134 @@ onUnmounted(() => stopCamera());
         <div class="guide-text">ALIGN FACE WITHIN PORTAL</div>
       </div>
 
+      <div v-if="isCameraStarted" class="detection-status">
+        <div v-if="!faceDetected && !isSampling" class="status-badge warning">
+          FACE NOT DETECTED
+        </div>
+        <div v-else-if="faceTooFar" class="status-badge info">
+          MOVE CLOSER
+        </div>
+      </div>
+
       <video ref="videoRef" autoplay muted playsinline @play="handleVideoPlay"></video>
       <canvas ref="canvasRef"></canvas>
       
+      <!-- Sampling Progress Overlay -->
+      <div v-if="isSampling" class="sampling-overlay">
+        <div class="progress-ring">
+          <svg viewBox="0 0 100 100">
+            <circle class="bg" cx="50" cy="50" r="45"></circle>
+            <circle class="fg" cx="50" cy="50" r="45" :style="{ strokeDashoffset: 283 - (283 * samples.length / REQUIRED_SAMPLES) }"></circle>
+          </svg>
+          <div class="sample-count">{{ samples.length }}/{{ REQUIRED_SAMPLES }}</div>
+        </div>
+        <div class="sampling-text">ANALYZING FACIAL GEOMETRY...</div>
+      </div>
+
       <div class="scanning-line"></div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.sampling-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.progress-ring {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.progress-ring svg {
+  transform: rotate(-90deg);
+}
+
+.progress-ring circle {
+  fill: none;
+  stroke-width: 4;
+}
+
+.progress-ring circle.bg {
+  stroke: rgba(255, 255, 255, 0.1);
+}
+
+.progress-ring circle.fg {
+  stroke: var(--accent-green);
+  stroke-dasharray: 283;
+  transition: stroke-dashoffset 0.3s ease;
+  filter: drop-shadow(0 0 5px var(--accent-green));
+}
+
+.sample-count {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--accent-green);
+}
+
+.sampling-text {
+  margin-top: 1rem;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: var(--accent-green);
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.detection-status {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.status-badge.warning {
+  background: rgba(255, 68, 68, 0.2);
+  color: #ff4444;
+  border: 1px solid rgba(255, 68, 68, 0.3);
+}
+
+.status-badge.info {
+  background: rgba(0, 255, 136, 0.1);
+  color: var(--accent-green);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .face-detector-container {
   width: 100%;
   height: 100%;

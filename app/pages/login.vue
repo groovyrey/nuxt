@@ -151,29 +151,27 @@ const handleFaceDetection = async (data) => {
     loading.value = true;
     error.value = '';
     try {
-      console.log('Sending biometric signature for verification...');
+      console.log('Initiating biometric handshake...');
       await $fetch('/api/auth/face-login', {
         method: 'POST',
         body: { 
           faceDescriptor: data.descriptor,
+          faceImage: data.image,
           username: loginForm.value.username 
         }
       });
       
       // Success: Stop camera and navigate
-      if (detectorRef.value) {
-        detectorRef.value.stopCamera();
-      }
+      if (detectorRef.value) detectorRef.value.stopCamera();
+      toast.success('Access Granted', { description: 'Biometric profile verified' });
       await fetchUser();
       navigateTo('/');
     } catch (err) {
-      // Failure: Show visual error message
-      console.warn('Biometric verification failed:', err);
-      error.value = err.data?.statusMessage || 'Biometric verification failed';
+      console.error('Biometric verification error:', err);
+      error.value = err.data?.statusMessage || 'Verification failed. Please try again.';
       
-      if (detectorRef.value) {
-        detectorRef.value.stopCamera();
-      }
+      // Allow retry by resetting sampling
+      if (detectorRef.value) detectorRef.value.resetSampling();
     } finally {
       loading.value = false;
     }

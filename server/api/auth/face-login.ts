@@ -1,10 +1,10 @@
 import { useDb } from '../../utils/db';
-import { createSession, findMatchingUserByFace, euclideanDistance, EUCLIDEAN_THRESHOLD, parseDescriptor } from '../../utils/auth';
+import { createSession, findMatchingUserByFace, EUCLIDEAN_THRESHOLD, parseDescriptor, compareManyToMany } from '../../utils/auth';
 
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
-    const { faceDescriptor, username: targetUsername } = body;
+    const { faceDescriptor, faceImage, username: targetUsername } = body;
 
     if (!faceDescriptor || !Array.isArray(faceDescriptor)) {
       throw createError({
@@ -16,7 +16,6 @@ export default defineEventHandler(async (event) => {
     let finalUsername = '';
 
     if (targetUsername) {
-      // 2FA Mode: Verify specific user
       const db = useDb();
       const [rows] = await db.execute(
         'SELECT username, face_descriptor FROM users WHERE username = ? AND face_descriptor IS NOT NULL',
@@ -25,43 +24,34 @@ export default defineEventHandler(async (event) => {
       const users = rows as any[];
       
       if (users.length === 0) {
-        throw createError({
-          statusCode: 404,
-          statusMessage: 'Biometric profile not found for this user',
-        });
+        throw createError({ statusCode: 404, statusMessage: 'Biometric profile not found' });
       }
 
       const user = users[0];
-      const storedDescriptor = parseDescriptor(user.face_descriptor);
+      const storedDescriptors = parseDescriptor(user.face_descriptor);
+      
+      const inputDescriptors = Array.isArray(faceDescriptor[0]) 
+        ? (faceDescriptor as number[][]) 
+        : [faceDescriptor as number[]];
 
-      if (!storedDescriptor) {
-        throw createError({
-          statusCode: 500,
-          statusMessage: 'Stored biometric profile is corrupted',
-        });
-      }
-
-      const distance = euclideanDistance(faceDescriptor, storedDescriptor);
-      console.log(`Face Login [2FA]: User=${targetUsername}, Distance=${distance.toFixed(4)}, Threshold=${EUCLIDEAN_THRESHOLD}`);
+      const distance = storedDescriptors ? compareManyToMany(inputDescriptors, storedDescriptors) : Infinity;
 
       if (distance >= EUCLIDEAN_THRESHOLD) {
-        throw createError({
-          statusCode: 401,
-          statusMessage: 'Biometric verification failed: identity mismatch',
-        });
+        throw createError({ statusCode: 401, statusMessage: 'Biometric verification failed' });
       }
       finalUsername = user.username;
     } else {
       // Standard Mode: Find any matching user
+      console.log('Discovery mode: searching database for biometric match...');
       const matchedUser = await findMatchingUserByFace(faceDescriptor);
-
-      if (!matchedUser) {
-        throw createError({
-          statusCode: 401,
-          statusMessage: 'Biometric signature not recognized',
-        });
+      
+      if (matchedUser) {
+        finalUsername = matchedUser.username;
       }
-      finalUsername = matchedUser.username;
+
+      if (!finalUsername) {
+        throw createError({ statusCode: 401, statusMessage: 'Biometric signature not recognized. Please ensure your face is clearly visible.' });
+      }
     }
 
     const sessionId = await createSession(finalUsername);

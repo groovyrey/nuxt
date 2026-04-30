@@ -1,9 +1,10 @@
 import { useDb } from '../../utils/db';
 import { hashPassword, createSession, findMatchingUserByFace, parseDescriptor } from '../../utils/auth';
+import { useHuggingFace } from '../../utils/huggingface';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { username, email, password, gender, age, faceDescriptor } = body;
+  const { username, email, password, gender, age, faceDescriptor, faceImage } = body;
 
   // 1. Basic Presence Validation
   if (!username || !email || !password) {
@@ -48,7 +49,8 @@ export default defineEventHandler(async (event) => {
   }
 
   // 5. Age Validation
-  if (age !== null && (typeof age !== 'number' || age < 13 || age > 120)) {
+  const numericAge = (age === null || age === '') ? null : Number(age);
+  if (numericAge !== null && (isNaN(numericAge) || numericAge < 13 || numericAge > 120)) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Age must be a number between 13 and 120',
@@ -66,26 +68,24 @@ export default defineEventHandler(async (event) => {
 
   const db = useDb();
   
+  console.log(`Registration attempt for user: ${username}, hasFace: ${!!faceDescriptor}`);
+  
   try {
-    /* 
-    // Biometric uniqueness check disabled per request
-    if (faceDescriptor && Array.isArray(faceDescriptor)) {
-      const matchedUser = await findMatchingUserByFace(faceDescriptor);
-      if (matchedUser) {
-        throw createError({
-          statusCode: 409,
-          statusMessage: 'This biometric profile is already registered to another account',
-        });
-      }
-    }
-    */
-
     const hashed = await hashPassword(password);
     
-    await db.execute(
-      'INSERT INTO users (username, email, password, gender, age, face_descriptor) VALUES (?, ?, ?, ?, ?, ?)',
-      [username, email, hashed, gender, age, faceDescriptor ? JSON.stringify(faceDescriptor) : null]
-    );
+    const descriptorToStore = faceDescriptor ? JSON.stringify(faceDescriptor) : null;
+    
+    try {
+      await db.execute(
+        'INSERT INTO users (username, email, password, gender, age, face_descriptor) VALUES (?, ?, ?, ?, ?, ?)',
+        [username, email, hashed, gender, age, descriptorToStore]
+      );
+    } catch (dbError: any) {
+      console.error('Database insertion error:', dbError);
+      throw dbError; // Rethrow to be caught by the outer catch
+    }
+
+    console.log(`User ${username} registered successfully`);
 
     const sessionId = await createSession(username);
     
@@ -111,7 +111,7 @@ export default defineEventHandler(async (event) => {
     console.error('Registration error:', error);
     throw createError({
       statusCode: 500,
-      statusMessage: 'Internal server error',
+      statusMessage: `Internal server error: ${error.message || 'Unknown error'}`,
     });
   }
 });

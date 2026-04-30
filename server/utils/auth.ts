@@ -39,16 +39,14 @@ export const deleteSession = async (sessionId: string) => {
   await db.execute('DELETE FROM sessions WHERE id = ?', [sessionId]);
 };
 
-export const EUCLIDEAN_THRESHOLD = 0.4;
+export const EUCLIDEAN_THRESHOLD = 0.45; // Slightly more relaxed for multiple samples
+export const MAX_DESCRIPTORS = 12;
 
-export function parseDescriptor(d: any): number[] | null {
+export function parseDescriptor(d: any): number[][] | null {
   if (!d) return null;
   try {
     let parsed = d;
     
-    // Log type for debugging
-    console.log(`Parsing descriptor. Type: ${typeof d}, IsBuffer: ${Buffer.isBuffer(d)}`);
-
     // Handle Buffer (sometimes returned by DB drivers)
     if (typeof d === 'object' && d !== null && 'type' in d && d.type === 'Buffer') {
       parsed = Buffer.from(d.data).toString('utf8');
@@ -66,12 +64,22 @@ export function parseDescriptor(d: any): number[] | null {
       }
     }
     
-    // Ensure it is an array of numbers
+    // Normalize to number[][]
     if (Array.isArray(parsed)) {
-      return parsed.map(Number);
+      if (parsed.length === 0) return null;
+      
+      // If it's a flat array of numbers (legacy or single descriptor), wrap it
+      if (typeof parsed[0] === 'number') {
+        return [parsed.map(Number)];
+      }
+      
+      // If it's an array of arrays
+      if (Array.isArray(parsed[0])) {
+        return parsed.map(arr => arr.map(Number));
+      }
     }
     
-    console.error('Descriptor is not an array after parsing:', typeof parsed);
+    console.error('Descriptor format unrecognized:', typeof parsed);
     return null;
   } catch (e) {
     console.error('Error parsing face descriptor:', e);
@@ -81,7 +89,6 @@ export function parseDescriptor(d: any): number[] | null {
 
 export function euclideanDistance(arr1: number[], arr2: number[]) {
   if (!arr1 || !arr2 || arr1.length !== arr2.length || arr1.length === 0) {
-    console.warn(`Euclidean distance mismatch: arr1(${arr1?.length}) vs arr2(${arr2?.length})`);
     return Infinity;
   }
   let sum = 0;
@@ -91,19 +98,40 @@ export function euclideanDistance(arr1: number[], arr2: number[]) {
   return Math.sqrt(sum);
 }
 
-export const findMatchingUserByFace = async (faceDescriptor: number[]) => {
+export function compareManyToMany(inputs: number[][], stored: number[][]) {
+  if (!inputs.length || !stored.length) return Infinity;
+  let minDistance = Infinity;
+  for (const input of inputs) {
+    if (!input) continue;
+    for (const s of stored) {
+      if (!s) continue;
+      const dist = euclideanDistance(input, s);
+      if (dist < minDistance) minDistance = dist;
+    }
+  }
+  return minDistance;
+}
+
+export const findMatchingUserByFace = async (faceDescriptor: number[] | number[][]) => {
   const db = useDb();
+  // Only select what we need
   const [rows] = await db.execute('SELECT username, face_descriptor FROM users WHERE face_descriptor IS NOT NULL');
   const users = rows as any[];
+
+  if (users.length === 0) return null;
+
+  const inputDescriptors = Array.isArray(faceDescriptor[0]) 
+    ? (faceDescriptor as number[][]) 
+    : [faceDescriptor as number[]];
 
   let matchedUser = null;
   let minDistance = Infinity;
 
   for (const user of users) {
-    const storedDescriptor = parseDescriptor(user.face_descriptor);
-    if (!storedDescriptor) continue;
+    const storedDescriptors = parseDescriptor(user.face_descriptor);
+    if (!storedDescriptors) continue;
 
-    const distance = euclideanDistance(faceDescriptor, storedDescriptor);
+    const distance = compareManyToMany(inputDescriptors, storedDescriptors);
     
     if (distance < minDistance && distance < EUCLIDEAN_THRESHOLD) {
       minDistance = distance;
@@ -112,7 +140,7 @@ export const findMatchingUserByFace = async (faceDescriptor: number[]) => {
   }
 
   if (matchedUser) {
-    console.log(`Matched user ${matchedUser.username} with distance ${minDistance}`);
+    console.log(`[MATCH] User: ${matchedUser.username}, Distance: ${minDistance.toFixed(4)}`);
   }
 
   return matchedUser;

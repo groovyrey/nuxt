@@ -195,6 +195,7 @@ const stepSubtitles = [
 
 const faceCaptured = ref(false);
 const capturedDescriptor = ref(null);
+const capturedImage = ref(null);
 const confirmPassword = ref('');
 
 const form = ref({
@@ -258,8 +259,9 @@ const isStep3Valid = computed(() => {
 });
 
 const handleDetection = (data) => {
-  if (data && data.descriptor && !faceCaptured.value) {
+  if (data && data.descriptor && data.isFinal && !faceCaptured.value) {
     capturedDescriptor.value = data.descriptor;
+    capturedImage.value = data.image;
     faceCaptured.value = true;
     toast.success('Biometrics Captured', { description: 'Facial signature verified' });
     
@@ -281,7 +283,8 @@ const handleRegister = async () => {
       method: 'POST',
       body: {
         ...form.value,
-        faceDescriptor: capturedDescriptor.value
+        faceDescriptor: capturedDescriptor.value,
+        faceImage: capturedImage.value
       }
     });
     
