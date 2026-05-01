@@ -6,7 +6,7 @@
           <h1>LU<span class="accent">FACE</span></h1>
           <div class="badge">BIOMETRIC SETUP</div>
         </div>
-        <p>Registering face for: <span class="username">{{ identifier }}</span></p>
+        <p v-if="!error">Registering face for: <span class="username">{{ identifier }}</span></p>
       </header>
 
       <div class="setup-content">
@@ -14,7 +14,7 @@
           <AlertCircleIcon :size="48" color="#ff4444" />
           <h3>SETUP ERROR</h3>
           <p>{{ error }}</p>
-          <button @click="goBack" class="btn-primary">RETURN TO APP</button>
+          <button @click="goBack" class="btn-primary">RETURN TO APPLICATION</button>
         </div>
 
         <div v-else class="scanner-section">
@@ -31,7 +31,7 @@
             <div v-if="success" class="success-overlay">
               <CheckCircleIcon :size="64" class="accent" />
               <h3>FACE REGISTERED</h3>
-              <p>Redirecting back...</p>
+              <p>Redirecting back to app...</p>
             </div>
           </div>
           
@@ -82,7 +82,6 @@ const handleDetection = async (data) => {
   if (data && data.descriptor && data.isFinal && !registering.value && !success.value) {
     registering.value = true;
     try {
-      // Use the streamlined V1 API to register the face
       await $fetch('/api/v1/register', {
         method: 'POST',
         headers: { 'X-API-Key': apiKey },
@@ -114,8 +113,14 @@ const handleDetection = async (data) => {
 };
 
 const goBack = () => {
-  if (redirectUrl) window.location.href = redirectUrl;
-  else window.history.back();
+  if (redirectUrl) {
+    const url = new URL(redirectUrl);
+    url.searchParams.append('status', 'error');
+    url.searchParams.append('message', error.value || 'Setup failed');
+    window.location.href = url.toString();
+  } else {
+    window.history.back();
+  }
 };
 </script>
 
@@ -131,11 +136,35 @@ const goBack = () => {
 
 .setup-card {
   width: 100%;
-  max-width: 440px;
+  max-width: 480px;
   background: var(--card-black);
   border: 1px solid var(--border-color);
   border-radius: 24px;
   overflow: hidden;
+  box-shadow: 0 40px 100px var(--shadow-color);
+}
+
+@media (max-width: 480px) {
+  .setup-card {
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
+  .setup-container {
+    padding: 0;
+    align-items: flex-start;
+  }
+  .setup-header {
+    padding: 3rem 1.5rem 1.5rem;
+  }
+  .setup-content {
+    padding: 1.5rem;
+  }
+  .scanner-wrapper {
+    aspect-ratio: auto;
+    min-height: 300px;
+  }
 }
 
 .setup-header {
@@ -144,22 +173,68 @@ const goBack = () => {
   border-bottom: 1px solid var(--border-dim);
 }
 
-.logo h1 { margin: 0; font-size: 1.25rem; letter-spacing: 0.1em; }
+.logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.logo h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: 0.1em;
+}
+
 .badge {
   background: var(--accent-green);
   color: var(--bg-black);
-  font-size: 0.55rem;
+  font-size: 0.6rem;
   font-weight: 900;
   padding: 2px 8px;
   border-radius: 4px;
-  display: inline-block;
-  margin-top: 4px;
+  letter-spacing: 0.05em;
 }
 
-.setup-header p { color: var(--text-dim); font-size: 0.75rem; margin-top: 1rem; }
-.username { color: var(--accent-green); font-weight: 700; }
+.setup-header p {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  margin: 0;
+}
 
-.setup-content { padding: 1.5rem; min-height: 300px; }
+.username {
+  color: var(--accent-green);
+  font-weight: 700;
+}
+
+.setup-content {
+  padding: 2rem;
+  min-height: 350px;
+  display: flex;
+  flex-direction: column;
+}
+
+.error-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1.5rem;
+}
+
+.error-state h3 {
+  margin: 0;
+  color: #ff4444;
+}
+
+.scanner-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
 
 .scanner-wrapper {
   width: 100%;
@@ -174,51 +249,54 @@ const goBack = () => {
 .registering-overlay, .success-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(8px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  gap: 1.5rem;
   z-index: 10;
-  text-align: center;
-  padding: 2rem;
 }
 
-.success-overlay h3 { color: var(--accent-green); margin: 0; }
-.scanner-footer { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-dim); font-size: 0.7rem; margin-top: 1rem; }
+.success-overlay h3 {
+  color: var(--accent-green);
+  margin: 0;
+}
+
+.scanner-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
 
 .setup-footer {
-  padding: 1.25rem;
+  padding: 1.5rem;
   background: rgba(0,0,0,0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   color: var(--text-dim);
-  font-size: 0.6rem;
+  font-size: 0.65rem;
+  font-weight: 600;
 }
 
 .btn-primary {
   background: var(--accent-green);
   color: var(--bg-black);
   border: none;
-  padding: 0.7rem 1.2rem;
+  padding: 0.8rem 1.5rem;
   border-radius: 8px;
   font-weight: 800;
   cursor: pointer;
-  margin-top: 1rem;
-}
-
-.error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  height: 100%;
 }
 
 .spin { animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 </style>
