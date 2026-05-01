@@ -12,6 +12,7 @@
   "dependencies": {
     "@vladmandic/face-api": "^1.7.15",
     "bcryptjs": "^3.0.3",
+    "highlight.js": "^11.11.1",
     "lucide-vue-next": "^1.0.0",
     "mysql2": "^3.22.3",
     "nuxt": "^4.4.2",

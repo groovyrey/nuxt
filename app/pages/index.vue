@@ -10,10 +10,6 @@
           <UserIcon :size="14" class="icon-dim" />
           <span class="username">{{ user.username }}</span>
         </span>
-        <button @click="logout" class="logout-btn">
-          <LogOutIcon :size="14" />
-          <span>LOGOUT</span>
-        </button>
       </div>
     </header>
     
@@ -126,10 +122,11 @@ import {
   Cpu as CpuIcon,
   Github as GithubIcon,
   Twitter as TwitterIcon,
-  Trash2 as Trash2Icon
+  Trash2 as Trash2Icon,
+  LogOut as LogOutIcon
 } from 'lucide-vue-next';
 
-const { user, isLoading } = useAuth();
+const { user, isLoading, logout } = useAuth();
 const isOnline = ref(true)
 const confirmDeletion = ref(false)
 const deleting = ref(false)

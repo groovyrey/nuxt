@@ -1,267 +1,485 @@
 <template>
-  <div class="docs-container">
-    <aside class="docs-sidebar">
-      <div class="sidebar-section">
-        <label>GETTING STARTED</label>
-        <ul>
-          <li><a href="#introduction">Introduction</a></li>
-          <li><a href="#authentication">Authentication</a></li>
-        </ul>
-      </div>
-      <div class="sidebar-section">
-        <label>INTEGRATION</label>
-        <ul>
-          <li><a href="#hosted-ui">Hosted UI (Redirect)</a></li>
-          <li><a href="#headless-api">Headless API</a></li>
-        </ul>
-      </div>
-      <div class="sidebar-section">
-        <label>ENDPOINTS</label>
-        <ul>
-          <li><a href="#endpoint-verify">POST /identify</a></li>
-          <li><a href="#endpoint-register">POST /register</a></li>
-        </ul>
-      </div>
-    </aside>
-
-    <main class="docs-content">
-      <section id="introduction">
-        <h1>Developer Documentation</h1>
-        <p class="lead">Integrate Luface's neural biometric verification into your own applications with just a few lines of code.</p>
-        
-        <div class="info-card">
-          <InfoIcon :size="18" />
-          <span>All API requests must be made over HTTPS. The base URL is <code>https://luface.app/api/v1</code></span>
+  <div class="docs-page">
+    <header class="docs-header">
+      <div class="header-content">
+        <div class="logo">
+          <ShieldCheckIcon :size="32" class="accent" />
+          <h1>LU<span class="accent">FACE</span> <span class="version">V1.0</span></h1>
         </div>
+        <p>Biometric-as-a-Service Documentation</p>
+      </div>
+    </header>
+
+    <nav class="docs-nav">
+      <div class="nav-content">
+        <a href="#overview">OVERVIEW</a>
+        <a href="#hosted-ui">HOSTED UI</a>
+        <a href="#api-v1">API V1</a>
+        <a href="#errors">ERRORS</a>
+        <a href="#example">EXAMPLE</a>
+      </div>
+    </nav>
+
+    <main class="docs-main">
+      <!-- Overview -->
+      <section id="overview">
+        <h2><TerminalIcon :size="20" /> SYSTEM OVERVIEW</h2>
+        <p>
+          Luface provides secure facial biometric authentication scoped to your application. 
+          All external users are isolated in a dedicated <code>external_users</code> vault, 
+          identified by <code>email</code> and your <code>X-API-Key</code>.
+        </p>
       </section>
 
-      <section id="authentication">
-        <h2>Authentication</h2>
-        <p>Luface uses API Keys to authenticate requests. You can generate and manage your keys in the <NuxtLink to="/">Dashboard</NuxtLink>.</p>
-        <p>Include your API key in the <code>X-API-Key</code> header for all headless API requests.</p>
-        
-        <div class="code-example">
-          <div class="code-header">HTTP HEADER</div>
-          <pre><code>X-API-Key: lf_7a2b...9f1e</code></pre>
-        </div>
-      </section>
-
+      <!-- Hosted UI -->
       <section id="hosted-ui">
-        <h2>Hosted UI (Redirect Flow)</h2>
-        <p>The easiest way to integrate Luface. Redirect your users to our secure scanning page, and we'll handle the biometric capture and verification.</p>
+        <h2><LayoutIcon :size="20" /> HOSTED UI (No-Code Integration)</h2>
+        <p>The easiest way to integrate biometrics. Redirect users to our hosted scanner.</p>
         
-        <div class="step">
-          <div class="step-num">1</div>
-          <div class="step-text">
-            <strong>Redirect User</strong>
-            <p>Send users to the following URL:</p>
-            <div class="code-example">
-              <pre><code>GET https://luface.app/verify?api_key=YOUR_KEY&redirect_url=YOUR_APP_URL</code></pre>
-            </div>
+        <div class="endpoint-item">
+          <div class="endpoint-header">
+            <span class="method get">GET</span>
+            <code>/setup-face</code>
+          </div>
+          <span class="endpoint-desc">Enroll a user's face for the first time</span>
+          <div class="code-block">
+            <pre><code class="language-yaml"># URL Parameters
+api_key      : Your Luface API Key (Required)
+email        : User's email (Unique ID for your app)
+username     : User's display name
+redirect_url : Where to return after enrollment success</code></pre>
           </div>
         </div>
 
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-text">
-            <strong>Handle Callback</strong>
-            <p>After verification, Luface redirects back to your <code>redirect_url</code> with result parameters:</p>
-            <ul>
-              <li><code>status</code>: "success" or "error"</li>
-              <li><code>username</code>: The identified user's handle</li>
-              <li><code>ts</code>: ISO Timestamp of verification</li>
-            </ul>
+        <div class="endpoint-item">
+          <div class="endpoint-header">
+            <span class="method get">GET</span>
+            <code>/verify</code>
+          </div>
+          <span class="endpoint-desc">Authenticate an existing user via face scan</span>
+          <div class="code-block">
+            <pre><code class="language-yaml"># URL Parameters
+api_key      : Your Luface API Key (Required)
+email        : (Optional) Enforce match for this specific email
+redirect_url : Where to return after verification success</code></pre>
           </div>
         </div>
       </section>
 
-      <section id="headless-api">
-        <h2>Headless API</h2>
-        <p>For applications that require full control over the user interface. You capture the face descriptor and send it to Luface for processing.</p>
+      <!-- API V1 -->
+      <section id="api-v1">
+        <h2><CpuIcon :size="20" /> API V1 (Server-to-Server)</h2>
         
-        <h3 id="endpoint-verify">Identify User</h3>
-        <p>Find a matching user profile from a facial signature.</p>
-        <div class="code-example">
-          <div class="code-header">POST /api/v1/identify</div>
-          <pre><code>{
-  "faceDescriptor": [0.12, -0.05, ...]
-}</code></pre>
-        </div>
+        <div class="endpoint-item">
+          <div class="endpoint-header">
+            <span class="method post">POST</span>
+            <code>/api/v1/verify-session</code>
+          </div>
+          <span class="endpoint-desc">Verify a captured face descriptor</span>
+          <div class="code-block">
+            <pre><code class="language-json">// Request Header
+X-API-Key: lf_...
 
-        <h3 id="endpoint-register">Register User</h3>
-        <p>Create a new Luface profile programmatically.</p>
-        <div class="code-example">
-          <div class="code-header">POST /api/v1/register</div>
-          <pre><code>{
-  "username": "operator_zero",
-  "email": "zero@system.com",
-  "password": "SecurePassword123",
-  "faceDescriptor": [...]
+// Request Body
+{
+  "email": "user@example.com",
+  "faceDescriptor": [0.12, -0.05, 0.88, ...]
+}</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- Errors -->
+      <section id="errors">
+        <h2><AlertTriangleIcon :size="20" /> ERROR CODES</h2>
+        <div class="table-wrapper">
+          <table class="error-table">
+            <thead>
+              <tr>
+                <th>CODE</th>
+                <th>MESSAGE</th>
+                <th>DESCRIPTION</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>401</td>
+                <td>Invalid API Key</td>
+                <td>The X-API-Key header or api_key param is missing/incorrect.</td>
+              </tr>
+              <tr>
+                <td>400</td>
+                <td>Face data missing</td>
+                <td>The faceDescriptor or required biometric data was not provided.</td>
+              </tr>
+              <tr>
+                <td>409</td>
+                <td>Conflict</td>
+                <td>Biometrics already registered for this email on your account.</td>
+              </tr>
+              <tr>
+                <td>200</td>
+                <td>No match found</td>
+                <td>Scan completed successfully but biometrics did not match the user.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Code Example -->
+      <section id="example">
+        <h2><CodeIcon :size="20" /> INTEGRATION EXAMPLE</h2>
+        <p>Example using Next.js Server Actions to trigger the biometric challenge:</p>
+        <div class="code-block">
+          <pre><code class="language-typescript">// luloyxpress/lib/actions.ts
+export async function loginAction(formData: FormData) {
+  const email = formData.get('email');
+  
+  // 1. Verify password locally...
+  // ...
+  
+  // 2. Redirect to Luface for biometric challenge
+  const lufaceUrl = new URL("https://luface-nu.vercel.app/verify");
+  lufaceUrl.searchParams.set("api_key", process.env.LUFACE_KEY);
+  lufaceUrl.searchParams.set("email", email);
+  lufaceUrl.searchParams.set("redirect_url", "https://luloyxpress.com/api/auth/face-callback");
+
+  return redirect(lufaceUrl.toString());
 }</code></pre>
         </div>
       </section>
+
+      <div class="docs-footer-actions">
+        <button @click="navigateTo('/')" class="btn-exit">
+          <LogOutIcon :size="16" />
+          EXIT TO DASHBOARD
+        </button>
+      </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { Info as InfoIcon } from 'lucide-vue-next';
+import { 
+  ShieldCheck as ShieldCheckIcon,
+  Terminal as TerminalIcon,
+  Layout as LayoutIcon,
+  Cpu as CpuIcon,
+  AlertTriangle as AlertTriangleIcon,
+  Code as CodeIcon,
+  LogOut as LogOutIcon
+} from 'lucide-vue-next';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/tokyo-night-dark.css';
 
-useHead({
-  title: 'Developer Docs | Luface'
+onMounted(() => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    hljs.highlightElement(block);
+  });
 });
 </script>
 
 <style scoped>
-.docs-container {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 3rem 1.5rem;
-  gap: 4rem;
-}
-
-.docs-sidebar {
-  position: sticky;
-  top: 100px;
-  height: fit-content;
-}
-
-.sidebar-section {
-  margin-bottom: 2rem;
-}
-
-.sidebar-section label {
-  font-size: 0.6rem;
-  font-weight: 800;
-  color: var(--text-dim);
-  letter-spacing: 0.1em;
-  display: block;
-  margin-bottom: 0.75rem;
-}
-
-.sidebar-section ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.sidebar-section li {
-  margin-bottom: 0.5rem;
-}
-
-.sidebar-section a {
-  text-decoration: none;
+.docs-page {
+  min-height: 100vh;
+  background: var(--bg-app);
   color: var(--text-main);
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: color 0.2s;
+  overflow-x: hidden;
 }
 
-.sidebar-section a:hover {
-  color: var(--accent-green);
+.docs-header {
+  background: #000;
+  border-bottom: 1px solid var(--border-dim);
+  padding: 3rem 1rem;
 }
 
-.docs-content {
-  max-width: 800px;
-  min-width: 0;
+.header-content {
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
-section {
-  margin-bottom: 4rem;
-  scroll-margin-top: 120px;
-  min-width: 0;
-}
-
-h1 { font-size: 2.5rem; margin-bottom: 1rem; word-break: break-word; }
-h2 { font-size: 1.75rem; margin: 2.5rem 0 1rem; color: var(--accent-green); word-break: break-word; }
-h3 { font-size: 1.25rem; margin: 2rem 0 1rem; word-break: break-word; }
-
-p { color: var(--text-dim); line-height: 1.6; margin-bottom: 1.25rem; word-break: break-word; }
-.lead { font-size: 1.1rem; color: var(--text-main); }
-
-.info-card {
-  background: rgba(var(--accent-green-rgb), 0.05);
-  border: 1px solid rgba(var(--accent-green-rgb), 0.2);
-  padding: 1rem;
-  border-radius: 12px;
+.logo {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: var(--text-main);
-  font-size: 0.85rem;
-  word-break: break-all;
+  margin-bottom: 0.75rem;
 }
 
-.code-example {
-  background: #000;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  overflow: hidden;
-  margin: 1.5rem 0;
-  max-width: 100%;
-}
-
-.code-header {
-  background: var(--glass);
-  padding: 0.5rem 1rem;
-  font-size: 0.6rem;
-  font-weight: 800;
-  color: var(--text-dim);
-  border-bottom: 1px solid var(--border-color);
-}
-
-pre {
-  padding: 1rem;
+.logo h1 {
+  font-size: 1.75rem;
+  letter-spacing: 0.15em;
+  font-weight: 950;
   margin: 0;
-  overflow-x: auto;
-  white-space: pre-wrap;
-  word-break: break-all;
 }
 
-code {
-  font-family: 'JetBrains Mono', monospace;
+@media (min-width: 768px) {
+  .docs-header { padding: 4rem 1.5rem; }
+  .logo h1 { font-size: 2.5rem; letter-spacing: 0.25em; }
+  .logo { gap: 16px; }
+}
+
+.version {
+  font-size: 0.6rem;
+  background: var(--accent-green);
+  color: var(--bg-black);
+  padding: 2px 8px;
+  border-radius: 4px;
+  vertical-align: middle;
+  letter-spacing: normal;
+}
+
+.docs-header p {
+  color: var(--text-dim);
   font-size: 0.85rem;
-  color: #00ff88;
-  word-break: break-all;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 800;
+  margin: 0;
 }
 
-.step {
+@media (min-width: 768px) {
+  .docs-header p { font-size: 1rem; letter-spacing: 0.1em; }
+}
+
+.docs-nav {
+  position: sticky;
+  top: 0;
+  background: rgba(0,0,0,0.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-dim);
+  z-index: 100;
+}
+
+.nav-content {
+  max-width: 1000px;
+  margin: 0 auto;
   display: flex;
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  padding: 1rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
 }
 
-.step-num {
-  width: 28px;
-  height: 28px;
-  background: var(--accent-green);
-  color: #000;
-  border-radius: 50%;
+@media (min-width: 768px) {
+  .nav-content { gap: 2.5rem; padding: 1.25rem 1.5rem; overflow-x: visible; }
+}
+
+.nav-content::-webkit-scrollbar {
+  display: none;
+}
+
+.docs-nav a {
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: var(--text-dim);
+  text-decoration: none;
+  letter-spacing: 0.1em;
+  transition: all 0.2s;
+}
+
+@media (min-width: 768px) {
+  .docs-nav a { font-size: 0.75rem; letter-spacing: 0.15em; }
+}
+
+.docs-nav a:hover {
+  color: var(--accent-green);
+}
+
+.docs-main {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 3rem 1rem 6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+}
+
+@media (min-width: 768px) {
+  .docs-main { padding: 4rem 1.5rem 8rem; gap: 6rem; }
+}
+
+section h2 {
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  color: var(--accent-green);
+  margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 10px;
   font-weight: 900;
+}
+
+@media (min-width: 768px) {
+  section h2 { font-size: 1.1rem; letter-spacing: 0.15em; gap: 12px; margin-bottom: 2rem; }
+}
+
+p {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-dim);
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  p { font-size: 1.05rem; line-height: 1.7; margin-bottom: 2rem; }
+}
+
+.endpoint-item {
+  margin-bottom: 2.5rem;
+}
+
+.endpoint-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.method {
+  font-size: 0.6rem;
+  font-weight: 950;
+  padding: 4px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+
+.method.get { background: #61affe; color: #fff; }
+.method.post { background: #49cc90; color: #fff; }
+
+.endpoint-header code {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text-main);
+  background: rgba(255,255,255,0.05);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+@media (min-width: 768px) {
+  .endpoint-header { gap: 12px; margin-bottom: 0.5rem; }
+  .endpoint-header code { font-size: 1.1rem; padding: 4px 10px; }
+  .method { font-size: 0.65rem; padding: 5px 10px; }
+}
+
+.endpoint-desc {
+  display: block;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  font-style: italic;
+}
+
+@media (min-width: 768px) {
+  .endpoint-desc { font-size: 0.9rem; margin-bottom: 1.25rem; }
+}
+
+.code-block {
+  background: #0d0d0d;
+  padding: 0;
+  border-radius: 12px;
+  border: 1px solid var(--border-dim);
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 1rem;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 0.8rem;
-  flex-shrink: 0;
+  line-height: 1.5;
+  overflow-x: auto;
 }
 
-@media (max-width: 900px) {
-  .docs-container { 
-    grid-template-columns: 1fr; 
-    padding: 2rem 1.5rem;
-    gap: 2rem;
-  }
-  .docs-sidebar { display: none; }
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.5rem; }
+@media (min-width: 768px) {
+  .code-block { border-radius: 16px; }
+  .code-block pre { padding: 1.5rem; font-size: 0.9rem; line-height: 1.6; }
 }
 
-@media (max-width: 600px) {
-  .step {
-    flex-direction: column;
-    gap: 1rem;
-  }
+.code-block code {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.table-wrapper {
+  border: 1px solid var(--border-dim);
+  border-radius: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 768px) {
+  .table-wrapper { border-radius: 16px; }
+}
+
+.error-table {
+  width: 100%;
+  min-width: 500px;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  background: rgba(255,255,255,0.02);
+}
+
+@media (min-width: 768px) {
+  .error-table { font-size: 0.9rem; }
+}
+
+.error-table th, .error-table td {
+  text-align: left;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-dim);
+}
+
+@media (min-width: 768px) {
+  .error-table th, .error-table td { padding: 1.25rem; }
+}
+
+.error-table th {
+  background: rgba(0,0,0,0.3);
+  color: var(--text-dim);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+}
+
+.docs-footer-actions {
+  padding-top: 3rem;
+  border-top: 1px solid var(--border-dim);
+  display: flex;
+  justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .docs-footer-actions { padding-top: 4rem; }
+}
+
+.btn-exit {
+  background: #fff;
+  color: #000;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .btn-exit { padding: 1rem 2.5rem; border-radius: 12px; gap: 10px; font-size: 0.8rem; }
+}
+
+.btn-exit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(255,255,255,0.1);
 }
 </style>
