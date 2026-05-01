@@ -1,6 +1,6 @@
 <template>
   <div class="layout-wrapper">
-    <ThemeToggle />
+    <Navbar />
     <slot />
   </div>
 </template>

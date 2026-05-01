@@ -88,7 +88,8 @@ import {
   Copy as CopyIcon, 
   Check as CheckIcon,
   Trash2 as Trash2Icon,
-  AlertTriangle as AlertTriangleIcon
+  AlertTriangle as AlertTriangleIcon,
+  Cpu as CpuIcon
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
@@ -218,6 +219,16 @@ onMounted(fetchKeys);
 .input-with-action {
   display: flex;
   gap: 10px;
+}
+
+@media (max-width: 400px) {
+  .input-with-action {
+    flex-direction: column;
+  }
+  .btn-create {
+    padding: 0.8rem;
+    justify-content: center;
+  }
 }
 
 .input-with-action input {
@@ -414,6 +425,55 @@ onMounted(fetchKeys);
 }
 
 .fade-slide-enter-active, .fade-slide-leave-active {
+  transition: all 0.3s ease;
+}
+.fade-slide-enter-from, .fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+</style>
+-border-dim);
+  color: var(--accent-green);
+}
+
+.guide-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.method label {
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.code-block {
+  background: rgba(0,0,0,0.2);
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-dim);
+}
+
+.code-block code {
+  font-family: monospace;
+  font-size: 0.7rem;
+  color: var(--text-main);
+  word-break: break-all;
+}
+
+.fade-slide-enter-active, .fade-slide-leave-active {
+  transition: all 0.3s ease;
+}
+.fade-slide-enter-from, .fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+</style>
+ .fade-slide-leave-active {
   transition: all 0.3s ease;
 }
 .fade-slide-enter-from, .fade-slide-leave-to {

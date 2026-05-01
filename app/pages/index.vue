@@ -117,7 +117,6 @@
 <script setup>
 import { 
   User as UserIcon, 
-  LogOut as LogOutIcon, 
   Mail as MailIcon, 
   ShieldCheck as ShieldCheckIcon,
   Fingerprint as FingerprintIcon,
@@ -130,7 +129,7 @@ import {
   Trash2 as Trash2Icon
 } from 'lucide-vue-next';
 
-const { user, isLoading, logout } = useAuth();
+const { user, isLoading } = useAuth();
 const isOnline = ref(true)
 const confirmDeletion = ref(false)
 const deleting = ref(false)

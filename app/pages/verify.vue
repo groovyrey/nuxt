@@ -158,6 +158,29 @@ const goBack = () => {
   box-shadow: 0 40px 100px var(--shadow-color);
 }
 
+@media (max-width: 480px) {
+  .verify-card {
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
+  .verify-container {
+    padding: 0;
+    align-items: flex-start;
+  }
+  .verify-header {
+    padding: 3rem 1.5rem 1.5rem;
+  }
+  .verify-content {
+    padding: 1.5rem;
+  }
+  .scanner-wrapper {
+    aspect-ratio: auto;
+    min-height: 300px;
+  }
+}
+
 .verify-header {
   padding: 2rem;
   text-align: center;
