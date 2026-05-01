@@ -14,19 +14,14 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event);
-  const { username, email, password, gender, age, faceDescriptor } = body;
+  const { email, faceDescriptor } = body;
 
-  // Validation (simplified version of the main register logic)
-  if (!username || !email || !password || !faceDescriptor) {
+  // Validation
+  if (!email || !faceDescriptor) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Username, email, password, and faceDescriptor are required',
+      statusMessage: 'Email and faceDescriptor are required',
     });
-  }
-
-  const usernameRegex = /^[a-zA-Z](?:[a-zA-Z0-9._](?![._])){1,18}[a-zA-Z0-9]$/;
-  if (!usernameRegex.test(username)) {
-    throw createError({ statusCode: 400, statusMessage: 'Invalid username format' });
   }
 
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -37,18 +32,18 @@ export default defineEventHandler(async (event) => {
   const db = useDb();
   
   try {
-    const hashed = await hashPassword(password);
     const descriptorToStore = JSON.stringify(faceDescriptor);
     
+    // Use ON DUPLICATE KEY UPDATE to allow re-registering faces for the same email
     await db.execute(
-      'INSERT INTO users (username, email, password, gender, age, face_descriptor) VALUES (?, ?, ?, ?, ?, ?)',
-      [username, email, hashed, gender || null, age || null, descriptorToStore]
+      'INSERT INTO external_users (developer_id, email, face_descriptor) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE face_descriptor = ?',
+      [devUserId, email, descriptorToStore, descriptorToStore]
     );
 
     return { 
       success: true, 
-      username,
-      message: 'User registered via Luface API'
+      email,
+      message: 'Face registered successfully'
     };
   } catch (error: any) {
     if (error.code === 'ER_DUP_ENTRY') {

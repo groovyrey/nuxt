@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const matchedUser = await findMatchingUserByFace(faceDescriptor);
+  const matchedUser = await findMatchingUserByFace(faceDescriptor, userId);
 
   if (!matchedUser) {
     return {

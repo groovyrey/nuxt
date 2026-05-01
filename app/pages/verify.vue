@@ -68,6 +68,7 @@ import { toast } from 'vue-sonner';
 const route = useRoute();
 const apiKey = route.query.api_key;
 const redirectUrl = route.query.redirect_url;
+const email = route.query.email;
 
 const loading = ref(true);
 const verifying = ref(false);
@@ -95,6 +96,7 @@ const handleDetection = async (data) => {
         method: 'POST',
         body: {
           apiKey,
+          email,
           faceDescriptor: data.descriptor
         }
       });

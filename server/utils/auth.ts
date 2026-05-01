@@ -133,10 +133,22 @@ export function compareManyToMany(inputs: number[][], stored: number[][]) {
   return minDistance;
 }
 
-export const findMatchingUserByFace = async (faceDescriptor: number[] | number[][]) => {
+export const findMatchingUserByFace = async (faceDescriptor: number[] | number[][], developerId?: string) => {
   const db = useDb();
-  // Only select what we need
-  const [rows] = await db.execute('SELECT username, face_descriptor FROM users WHERE face_descriptor IS NOT NULL');
+  
+  let query: string;
+  let params: any[] = [];
+  
+  if (developerId) {
+    // Search in external_users table for API users
+    query = 'SELECT email as username, face_descriptor FROM external_users WHERE developer_id = ? AND face_descriptor IS NOT NULL';
+    params = [developerId];
+  } else {
+    // Search in native users table
+    query = 'SELECT username, face_descriptor FROM users WHERE face_descriptor IS NOT NULL';
+  }
+
+  const [rows] = await db.execute(query, params);
   const users = rows as any[];
 
   if (users.length === 0) return null;
