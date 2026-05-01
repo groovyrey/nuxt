@@ -43,3 +43,11 @@ export const validateApiKey = async (apiKey: string) => {
   
   return null;
 };
+
+export const updateExternalUserActivity = async (developerId: string, email: string) => {
+  const db = useDb();
+  await db.execute(
+    'UPDATE external_users SET last_seen_at = NOW() WHERE developer_id = ? AND email = ?',
+    [developerId, email]
+  );
+};

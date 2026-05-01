@@ -54,15 +54,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const sessionId = await createSession(finalUsername);
-    
-    setCookie(event, 'auth_session', sessionId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' && !process.env.DB_HOST?.includes('localhost'),
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
-    });
+    await createSession(event, finalUsername);
     return { success: true, username: finalUsername };
   } catch (error: any) {
     console.error('FACE_LOGIN_CRITICAL_ERROR:', {

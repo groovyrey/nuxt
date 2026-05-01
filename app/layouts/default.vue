@@ -1,9 +1,15 @@
 <template>
   <div class="layout-wrapper">
-    <Navbar />
+    <Navbar v-if="showNavbar" />
     <slot />
   </div>
 </template>
+
+<script setup>
+const route = useRoute();
+const standaloneRoutes = ['/verify', '/setup-face'];
+const showNavbar = computed(() => !standaloneRoutes.includes(route.path));
+</script>
 
 <style scoped>
 .layout-wrapper {

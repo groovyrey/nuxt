@@ -132,7 +132,7 @@ X-API-Key: lf_...
         <h2><CodeIcon :size="20" /> INTEGRATION EXAMPLE</h2>
         <p>Example using Next.js Server Actions to trigger the biometric challenge:</p>
         <div class="code-block">
-          <pre><code class="language-typescript">// luloyxpress/lib/actions.ts
+          <pre><code class="language-typescript">// app/lib/actions.ts
 export async function loginAction(formData: FormData) {
   const email = formData.get('email');
   
@@ -140,10 +140,10 @@ export async function loginAction(formData: FormData) {
   // ...
   
   // 2. Redirect to Luface for biometric challenge
-  const lufaceUrl = new URL("https://luface-nu.vercel.app/verify");
+  const lufaceUrl = new URL("https://luface.vercel.app/verify");
   lufaceUrl.searchParams.set("api_key", process.env.LUFACE_KEY);
   lufaceUrl.searchParams.set("email", email);
-  lufaceUrl.searchParams.set("redirect_url", "https://luloyxpress.com/api/auth/face-callback");
+  lufaceUrl.searchParams.set("redirect_url", "https://yourapp.com/api/auth/face-callback");
 
   return redirect(lufaceUrl.toString());
 }</code></pre>
@@ -189,7 +189,7 @@ onMounted(() => {
 }
 
 .docs-header {
-  background: #000;
+  background: var(--bg-black);
   border-bottom: 1px solid var(--border-dim);
   padding: 3rem 1rem;
 }
@@ -222,7 +222,7 @@ onMounted(() => {
 .version {
   font-size: 0.6rem;
   background: var(--accent-green);
-  color: var(--bg-black);
+  color: #000;
   padding: 2px 8px;
   border-radius: 4px;
   vertical-align: middle;
@@ -245,7 +245,7 @@ onMounted(() => {
 .docs-nav {
   position: sticky;
   top: 0;
-  background: rgba(0,0,0,0.9);
+  background: var(--bg-black);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-dim);
   z-index: 100;
@@ -353,7 +353,7 @@ p {
   font-size: 0.9rem;
   font-weight: 800;
   color: var(--text-main);
-  background: rgba(255,255,255,0.05);
+  background: var(--input-bg);
   padding: 3px 8px;
   border-radius: 6px;
 }
@@ -378,12 +378,12 @@ p {
 }
 
 .code-block {
-  background: #0d0d0d;
+  background: var(--card-black);
   padding: 0;
   border-radius: 12px;
   border: 1px solid var(--border-dim);
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  box-shadow: 0 10px 30px var(--shadow-color);
 }
 
 .code-block pre {
@@ -421,7 +421,7 @@ p {
   min-width: 500px;
   border-collapse: collapse;
   font-size: 0.8rem;
-  background: rgba(255,255,255,0.02);
+  background: var(--glass);
 }
 
 @media (min-width: 768px) {
@@ -439,7 +439,7 @@ p {
 }
 
 .error-table th {
-  background: rgba(0,0,0,0.3);
+  background: var(--glass);
   color: var(--text-dim);
   font-weight: 900;
   text-transform: uppercase;
@@ -459,8 +459,8 @@ p {
 }
 
 .btn-exit {
-  background: #fff;
-  color: #000;
+  background: var(--text-main);
+  color: var(--bg-app);
   border: none;
   padding: 0.8rem 1.5rem;
   border-radius: 10px;

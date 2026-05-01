@@ -10,7 +10,7 @@ export const comparePassword = async (password: string, hash: string) => {
   return await bcrypt.compare(password, hash);
 };
 
-export const createSession = async (username: string) => {
+export const createSession = async (event: any, username: string) => {
   const db = useDb();
   const sessionId = uuidv4();
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days
@@ -19,6 +19,19 @@ export const createSession = async (username: string) => {
     'INSERT INTO sessions (id, username, expires_at) VALUES (?, ?, ?)',
     [sessionId, username, expiresAt]
   );
+
+  // Update last login
+  await db.execute(
+    'UPDATE users SET last_login_at = NOW() WHERE username = ?',
+    [username]
+  );
+
+  setCookie(event, 'auth_session', sessionId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    expires: expiresAt
+  });
   
   return sessionId;
 };

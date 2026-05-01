@@ -87,15 +87,7 @@ export default defineEventHandler(async (event) => {
 
     console.log(`User ${username} registered successfully`);
 
-    const sessionId = await createSession(username);
-    
-    setCookie(event, 'auth_session', sessionId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' && !process.env.DB_HOST?.includes('localhost'),
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
-    });
+    await createSession(event, username);
 
     return { success: true, username };
   } catch (error: any) {

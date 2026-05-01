@@ -1,4 +1,4 @@
-import { validateApiKey } from '../../utils/api-key';
+import { validateApiKey, updateExternalUserActivity } from '../../utils/api-key';
 import { findMatchingUserByFace } from '../../utils/auth';
 
 export default defineEventHandler(async (event) => {
@@ -38,9 +38,10 @@ export default defineEventHandler(async (event) => {
     };
   }
 
+  await updateExternalUserActivity(userId, matchedUser.username);
+
   return {
     match: true,
     username: matchedUser.username,
-    // We can expose other non-sensitive info if needed
   };
 });

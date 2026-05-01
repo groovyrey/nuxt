@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS users (
     gender VARCHAR(50),
     age INT,
     face_descriptor JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login_at TIMESTAMP NULL
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -24,4 +25,14 @@ CREATE TABLE IF NOT EXISTS api_keys (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_used_at TIMESTAMP NULL,
     FOREIGN KEY (user_id) REFERENCES users(username) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS external_users (
+    developer_id VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    face_descriptor JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_seen_at TIMESTAMP NULL,
+    PRIMARY KEY (developer_id, email),
+    FOREIGN KEY (developer_id) REFERENCES users(username) ON DELETE CASCADE
 );

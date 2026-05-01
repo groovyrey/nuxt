@@ -34,40 +34,40 @@
         </button>
       </div>
     </div>
-
-    <!-- Mobile Sidebar Backdrop -->
-    <Transition name="fade">
-      <div v-if="isMenuOpen" class="mobile-backdrop" @click="isMenuOpen = false"></div>
-    </Transition>
-
-    <!-- Mobile Sidebar -->
-    <Transition name="slide">
-      <div v-if="isMenuOpen" class="mobile-menu">
-        <button @click="isMenuOpen = false" class="mobile-close-btn">
-          <XIcon :size="24" />
-        </button>
-        <div class="mobile-menu-content">
-          <NuxtLink to="/docs" class="mobile-nav-item" @click="isMenuOpen = false">DOCS</NuxtLink>
-          
-          <template v-if="user">
-            <NuxtLink to="/" class="mobile-nav-item" @click="isMenuOpen = false">DASHBOARD</NuxtLink>
-            <div class="mobile-user-info">
-              <span class="mobile-username">SIGNED IN AS: {{ user.username }}</span>
-              <button @click="handleLogout" class="mobile-logout-btn">
-                <LogOutIcon :size="16" />
-                LOGOUT
-              </button>
-            </div>
-          </template>
-          
-          <template v-else>
-            <NuxtLink to="/login" class="mobile-nav-item" @click="isMenuOpen = false">LOGIN</NuxtLink>
-            <NuxtLink to="/register" class="mobile-nav-btn" @click="isMenuOpen = false">GET STARTED</NuxtLink>
-          </template>
-        </div>
-      </div>
-    </Transition>
   </nav>
+
+  <!-- Mobile Sidebar Backdrop -->
+  <Transition name="fade">
+    <div v-if="isMenuOpen" class="mobile-backdrop" @click="isMenuOpen = false"></div>
+  </Transition>
+
+  <!-- Mobile Sidebar -->
+  <Transition name="slide">
+    <div v-if="isMenuOpen" class="mobile-menu">
+      <button @click="isMenuOpen = false" class="mobile-close-btn">
+        <XIcon :size="24" />
+      </button>
+      <div class="mobile-menu-content">
+        <NuxtLink to="/docs" class="mobile-nav-item" @click="isMenuOpen = false">DOCS</NuxtLink>
+        
+        <template v-if="user">
+          <NuxtLink to="/" class="mobile-nav-item" @click="isMenuOpen = false">DASHBOARD</NuxtLink>
+          <div class="mobile-user-info">
+            <span class="mobile-username">SIGNED IN AS: {{ user.username }}</span>
+            <button @click="handleLogout" class="mobile-logout-btn">
+              <LogOutIcon :size="16" />
+              LOGOUT
+            </button>
+          </div>
+        </template>
+        
+        <template v-else>
+          <NuxtLink to="/login" class="mobile-nav-item" @click="isMenuOpen = false">LOGIN</NuxtLink>
+          <NuxtLink to="/register" class="mobile-nav-btn" @click="isMenuOpen = false">GET STARTED</NuxtLink>
+        </template>
+      </div>
+    </div>
+  </Transition>
 </template>
 
 <script setup>
