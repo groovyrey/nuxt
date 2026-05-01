@@ -10,6 +10,7 @@
         <NuxtLink to="/docs" class="nav-item" active-class="active">DOCS</NuxtLink>
         <template v-if="user">
           <NuxtLink to="/" class="nav-item" active-class="active">DASHBOARD</NuxtLink>
+          <NuxtLink to="/keys" class="nav-item" active-class="active">API KEYS</NuxtLink>
           <div class="nav-divider"></div>
           <div class="user-menu">
             <span class="nav-username">{{ user.username }}</span>
@@ -52,6 +53,7 @@
         
         <template v-if="user">
           <NuxtLink to="/" class="mobile-nav-item" @click="isMenuOpen = false">DASHBOARD</NuxtLink>
+          <NuxtLink to="/keys" class="mobile-nav-item" @click="isMenuOpen = false">API KEYS</NuxtLink>
           <div class="mobile-user-info">
             <span class="mobile-username">SIGNED IN AS: {{ user.username }}</span>
             <button @click="handleLogout" class="mobile-logout-btn">

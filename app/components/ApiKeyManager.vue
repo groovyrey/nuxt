@@ -1,10 +1,6 @@
 <template>
   <div class="api-key-manager">
     <div class="section-header">
-      <div class="title-with-icon">
-        <KeyIcon :size="18" class="accent" />
-        <h3>DEVELOPER ACCESS</h3>
-      </div>
       <div class="header-actions">
         <button v-if="activeTab === 'keys'" @click="showCreate = !showCreate" class="btn-sm">
           {{ showCreate ? 'CANCEL' : 'GENERATE NEW KEY' }}

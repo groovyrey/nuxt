@@ -1,5 +1,9 @@
 import { useDb } from './server/utils/db';
 import { encryptBiometrics } from './server/utils/encryption';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env.local
+dotenv.config({ path: '.env.local' });
 
 async function migrate() {
   const db = useDb();

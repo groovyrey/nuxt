@@ -65,9 +65,14 @@
           <span class="value">ENCRYPTED GRID</span>
         </div>
 
-        <!-- API Key Management -->
-        <div class="status-item api-section">
-          <ApiKeyManager />
+        <!-- API Key Management Shortcut -->
+        <div class="status-item api-shortcut">
+          <label><KeyIcon :size="10" /> DEVELOPER ACCESS</label>
+          <p class="shortcut-desc">Manage API keys, webhooks and view usage logs.</p>
+          <NuxtLink to="/keys" class="manage-link">
+            GO TO API MANAGER
+            <ArrowRightIcon :size="14" />
+          </NuxtLink>
         </div>
 
         <!-- Danger Zone -->
@@ -123,7 +128,9 @@ import {
   Github as GithubIcon,
   Twitter as TwitterIcon,
   Trash2 as Trash2Icon,
-  LogOut as LogOutIcon
+  LogOut as LogOutIcon,
+  Key as KeyIcon,
+  ArrowRight as ArrowRightIcon
 } from 'lucide-vue-next';
 
 const { user, isLoading, logout } = useAuth();
@@ -394,6 +401,40 @@ h1 {
   color: var(--text-main);
 }
 
+.status-item.api-shortcut {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shortcut-desc {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.manage-link {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--glass);
+  border: 1px solid var(--border-color);
+  color: var(--accent-green);
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.manage-link:hover {
+  background: var(--border-color);
+  transform: translateX(4px);
+}
+
 .danger-zone {
   border-color: rgba(255, 68, 68, 0.2);
   margin-top: auto;
@@ -539,4 +580,4 @@ h1 {
   .luface-card { padding: 1.5rem; }
   .profile-details { grid-template-columns: 1fr; }
 }
-</style>>
+</style>
