@@ -74,7 +74,7 @@ export default defineEventHandler(async (event) => {
     if (error.statusCode) throw error;
     throw createError({
       statusCode: 500,
-      statusMessage: 'Neural engine error during authentication',
+      statusMessage: 'Luface engine error during authentication',
     });
   }
 });

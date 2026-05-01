@@ -68,7 +68,7 @@ const loadModels = async () => {
     }
   } catch (err: any) {
     console.error('Error loading models:', err);
-    error.value = 'Neural Engine initialization failed.';
+    error.value = 'Luface Engine initialization failed.';
   }
 };
 

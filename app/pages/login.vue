@@ -5,7 +5,7 @@
         <div class="auth-logo">
           <ShieldAlertIcon :size="40" class="accent" />
         </div>
-        <h1>NEURAL<span class="accent">ACCESS</span></h1>
+        <h1>LU<span class="accent">FACE</span></h1>
         <p class="subtitle">System Authentication Required</p>
       </header>
 

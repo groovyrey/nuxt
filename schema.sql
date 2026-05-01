@@ -14,3 +14,14 @@ CREATE TABLE IF NOT EXISTS sessions (
     expires_at DATETIME NOT NULL,
     FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS api_keys (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    key_hash VARCHAR(255) NOT NULL,
+    key_prefix VARCHAR(50) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_used_at TIMESTAMP NULL,
+    FOREIGN KEY (user_id) REFERENCES users(username) ON DELETE CASCADE
+);

@@ -3,7 +3,7 @@
     <header class="glass-header">
       <div class="logo-area">
         <div class="status-dot" :class="{ 'active': isOnline }"></div>
-        <h1>NEURAL<span class="accent">VISION</span></h1>
+        <h1>LU<span class="accent">FACE</span></h1>
       </div>
       <div class="user-controls">
         <span class="username-wrapper">
@@ -18,7 +18,7 @@
     </header>
     
     <main class="content-grid">
-      <div class="vision-card">
+      <div class="luface-card">
         <div class="user-profile-display">
           <div class="profile-header">
             <div class="avatar-placeholder">
@@ -69,6 +69,11 @@
           <span class="value">ENCRYPTED GRID</span>
         </div>
 
+        <!-- API Key Management -->
+        <div class="status-item api-section">
+          <ApiKeyManager />
+        </div>
+
         <!-- Danger Zone -->
         <div class="status-item danger-zone">
           <label><Trash2Icon :size="10" /> DANGER ZONE</label>
@@ -95,7 +100,7 @@
     <footer class="system-footer">
       <div class="footer-line"></div>
       <div class="footer-content">
-        <p>&copy; 2024 NEURAL VISION SYSTEM • SECURE ACCESS ONLY</p>
+        <p>&copy; 2024 LUFACE SYSTEM • SECURE ACCESS ONLY</p>
         <div class="footer-icons">
           <GithubIcon :size="16" />
           <TwitterIcon :size="16" />
@@ -344,7 +349,7 @@ h1 {
   flex: 1;
 }
 
-.vision-card {
+.luface-card {
   background: var(--card-black);
   border: 1px solid var(--border-dim);
   border-radius: 20px;
@@ -535,7 +540,7 @@ h1 {
   .profile-info .email { justify-content: center; }
   .logo-area h1 { font-size: 1.1rem; }
   .user-controls { width: 100%; justify-content: space-between; }
-  .vision-card { padding: 1.5rem; }
+  .luface-card { padding: 1.5rem; }
   .profile-details { grid-template-columns: 1fr; }
 }
-</style>
+</style>>

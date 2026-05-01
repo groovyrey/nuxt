@@ -24,7 +24,7 @@
       </div>
 
       <header class="auth-header">
-        <h1>NEURAL<span class="accent">REGISTRY</span></h1>
+        <h1>LU<span class="accent">FACE</span></h1>
         <p class="subtitle">{{ stepSubtitles[currentStep-1] }}</p>
       </header>
 
@@ -72,7 +72,7 @@
               <div class="form-group" :class="{ 'has-error': touched.email && !validation.email.valid }">
                 <label><MailIcon :size="10" /> EMAIL ADDRESS</label>
                 <div class="input-wrapper">
-                  <input v-model="form.email" type="email" placeholder="operator@neural.sys" @blur="touch('email')" />
+                  <input v-model="form.email" type="email" placeholder="operator@luface.sys" @blur="touch('email')" />
                   <AlertCircleIcon v-if="touched.email && !validation.email.valid" class="error-icon" :size="16" />
                 </div>
                 <Transition name="fade-in">
@@ -188,7 +188,7 @@ const detectorRef = ref(null);
 
 const stepLabels = ['BIOMETRICS', 'IDENTITY', 'SECURITY'];
 const stepSubtitles = [
-  'Registering neural facial signature',
+  'Registering facial signature',
   'Establishing operator identification',
   'Configuring secure access credentials'
 ];
@@ -230,7 +230,7 @@ const validation = computed(() => {
     },
     email: {
       valid: emailRegex.test(form.value.email),
-      message: 'Enter a valid neural-link address'
+      message: 'Enter a valid operator address'
     },
     age: {
       valid: form.value.age >= 13 && form.value.age <= 120,
@@ -288,7 +288,7 @@ const handleRegister = async () => {
       }
     });
     
-    toast.success('Profile Created', { description: 'Welcome to Neural Systems' });
+    toast.success('Profile Created', { description: 'Welcome to Luface' });
     await fetchUser();
     navigateTo('/');
   } catch (err) {
@@ -677,4 +677,4 @@ input:focus, select:focus {
     background: transparent;
   }
 }
-</style>
+</style>tyle>le>

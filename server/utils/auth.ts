@@ -39,6 +39,27 @@ export const deleteSession = async (sessionId: string) => {
   await db.execute('DELETE FROM sessions WHERE id = ?', [sessionId]);
 };
 
+export const requireAuth = async (event: any) => {
+  const sessionId = getCookie(event, 'auth_session');
+  if (!sessionId) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Unauthorized'
+    });
+  }
+
+  const session = await getAuthSession(sessionId);
+  if (!session) {
+    deleteCookie(event, 'auth_session');
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Unauthorized'
+    });
+  }
+
+  return session;
+};
+
 export const EUCLIDEAN_THRESHOLD = 0.45; // Slightly more relaxed for multiple samples
 export const MAX_DESCRIPTORS = 12;
 
