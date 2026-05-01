@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { useDb } from './db';
+import { decryptBiometrics } from './encryption';
 
 export const hashPassword = async (password: string) => {
   return await bcrypt.hash(password, 10);
@@ -79,15 +80,19 @@ export const MAX_DESCRIPTORS = 12;
 export function parseDescriptor(d: any): number[][] | null {
   if (!d) return null;
   try {
-    let parsed = d;
+    let raw = d;
     
     // Handle Buffer (sometimes returned by DB drivers)
     if (typeof d === 'object' && d !== null && 'type' in d && d.type === 'Buffer') {
-      parsed = Buffer.from(d.data).toString('utf8');
+      raw = Buffer.from(d.data).toString('utf8');
     } else if (Buffer.isBuffer(d)) {
-      parsed = d.toString('utf8');
+      raw = d.toString('utf8');
     }
     
+    // Decrypt if encrypted
+    const decrypted = decryptBiometrics(raw);
+    let parsed = decrypted;
+
     // Handle Stringified JSON
     if (typeof parsed === 'string') {
       try {
@@ -146,7 +151,7 @@ export function compareManyToMany(inputs: number[][], stored: number[][]) {
   return minDistance;
 }
 
-export const findMatchingUserByFace = async (faceDescriptor: number[] | number[][], targetIdentifier: string, developerId?: string) => {
+export const findMatchingUserByFace = async (faceDescriptor: number[] | number[][], targetIdentifier: string, developerId?: string, customThreshold?: number) => {
   const db = useDb();
   
   let query: string;
@@ -177,11 +182,13 @@ export const findMatchingUserByFace = async (faceDescriptor: number[] | number[]
 
   const distance = compareManyToMany(inputDescriptors, storedDescriptors);
   
-  if (distance < EUCLIDEAN_THRESHOLD) {
-    console.log(`[MATCH] User: ${user.username}, Distance: ${distance.toFixed(4)}`);
+  const threshold = customThreshold || EUCLIDEAN_THRESHOLD;
+
+  if (distance < threshold) {
+    console.log(`[MATCH] User: ${user.username}, Distance: ${distance.toFixed(4)} (Threshold: ${threshold})`);
     return user;
   }
 
-  console.log(`[NO MATCH] User: ${user.username}, Distance: ${distance.toFixed(4)} (Threshold: ${EUCLIDEAN_THRESHOLD})`);
+  console.log(`[NO MATCH] User: ${user.username}, Distance: ${distance.toFixed(4)} (Threshold: ${threshold})`);
   return null;
 };

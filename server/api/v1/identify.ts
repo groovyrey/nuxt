@@ -1,8 +1,11 @@
 import { validateApiKey, updateExternalUserActivity } from '../../utils/api-key';
 import { findMatchingUserByFace } from '../../utils/auth';
+import { logApiUsage } from '../../utils/usage';
+import { triggerWebhook } from '../../utils/webhooks';
 
 export default defineEventHandler(async (event) => {
   const apiKey = getHeader(event, 'X-API-Key');
+  const url = getRequestURL(event);
   
   if (!apiKey) {
     throw createError({
@@ -11,27 +14,35 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const userId = await validateApiKey(apiKey);
-  if (!userId) {
+  const keyRecord = await validateApiKey(apiKey);
+  if (!keyRecord) {
     throw createError({
       statusCode: 401,
       statusMessage: 'Invalid API Key'
     });
   }
 
+  const userId = keyRecord.user_id;
   const body = await readBody(event);
   const { faceDescriptor, email } = body;
 
   if (!faceDescriptor || !email) {
+    await logApiUsage(keyRecord.id, url.pathname, 400);
     throw createError({
       statusCode: 400,
       statusMessage: 'faceDescriptor and email are required'
     });
   }
 
-  const matchedUser = await findMatchingUserByFace(faceDescriptor, email, userId);
+  const matchedUser = await findMatchingUserByFace(
+    faceDescriptor, 
+    email, 
+    userId,
+    keyRecord.threshold // Pass custom threshold
+  );
 
   if (!matchedUser) {
+    await logApiUsage(keyRecord.id, url.pathname, 200);
     return {
       match: false,
       username: null
@@ -39,6 +50,14 @@ export default defineEventHandler(async (event) => {
   }
 
   await updateExternalUserActivity(userId, matchedUser.username);
+  await logApiUsage(keyRecord.id, url.pathname, 200);
+
+  // Trigger Webhook
+  await triggerWebhook(userId, 'face.identified', {
+    username: matchedUser.username,
+    email: matchedUser.email || matchedUser.username,
+    timestamp: new Date().toISOString()
+  });
 
   return {
     match: true,

@@ -1,6 +1,7 @@
 import { useDb } from '../../utils/db';
 import { hashPassword, createSession, findMatchingUserByFace, parseDescriptor } from '../../utils/auth';
 import { useHuggingFace } from '../../utils/huggingface';
+import { encryptBiometrics } from '../../utils/encryption';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -73,7 +74,10 @@ export default defineEventHandler(async (event) => {
   try {
     const hashed = await hashPassword(password);
     
-    const descriptorToStore = faceDescriptor ? JSON.stringify(faceDescriptor) : null;
+    let descriptorToStore = faceDescriptor ? JSON.stringify(faceDescriptor) : null;
+    if (descriptorToStore) {
+      descriptorToStore = encryptBiometrics(descriptorToStore);
+    }
     
     try {
       await db.execute(

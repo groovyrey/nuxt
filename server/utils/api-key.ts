@@ -37,7 +37,7 @@ export const validateApiKey = async (apiKey: string) => {
         'UPDATE api_keys SET last_used_at = NOW() WHERE id = ?',
         [key.id]
       );
-      return key.user_id;
+      return key;
     }
   }
   
