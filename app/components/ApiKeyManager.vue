@@ -251,10 +251,14 @@ const deleteWebhook = async (id) => {
 
 const updateThreshold = async (keyId, threshold) => {
   try {
+    const val = parseFloat(threshold);
     await $fetch(`/api/keys/${keyId}`, {
       method: 'PATCH',
-      body: { threshold: parseFloat(threshold) }
+      body: { threshold: val }
     });
+    // Update local state
+    const key = keys.value.find(k => k.id === keyId);
+    if (key) key.threshold = val;
     toast.success('Threshold updated');
   } catch (err) {
     toast.error('Failed to update threshold');

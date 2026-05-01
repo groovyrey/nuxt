@@ -33,10 +33,6 @@ const isSampling = ref(false);
 const samples = ref<number[][]>([]);
 const REQUIRED_SAMPLES = 12;
 
-const livenessStatus = ref<'ALIGN' | 'BLINK' | 'VERIFIED'>('ALIGN');
-const hasBlinked = ref(false);
-const lastEyeDist = ref(0);
-
 const averageDescriptors = (descriptors: number[][]) => {
   if (descriptors.length === 0) return null;
   const length = descriptors[0].length;
@@ -148,34 +144,6 @@ const handleVideoPlay = () => {
       if (detection) {
         faceDetected.value = true;
 
-        // Liveness Detection Logic
-        if (livenessStatus.value === 'ALIGN') {
-          const box = detection.detection.box;
-          const centerX = box.x + box.width / 2;
-          const centerY = box.y + box.height / 2;
-          const frameCenterX = displaySize!.width / 2;
-          const frameCenterY = displaySize!.height / 2;
-          
-          const distToCenter = Math.sqrt(Math.pow(centerX - frameCenterX, 2) + Math.pow(centerY - frameCenterY, 2));
-          if (distToCenter < 100) {
-            livenessStatus.value = 'BLINK';
-          }
-        } else if (livenessStatus.value === 'BLINK' && !hasBlinked.value) {
-          const landmarks = detection.landmarks;
-          const leftEye = landmarks.getLeftEye();
-          const rightEye = landmarks.getRightEye();
-          
-          const leftDist = Math.abs(leftEye[1].y - leftEye[5].y);
-          const rightDist = Math.abs(rightEye[1].y - rightEye[5].y);
-          const avgDist = (leftDist + rightDist) / 2;
-
-          if (lastEyeDist.value > 0 && avgDist < lastEyeDist.value * 0.7) {
-            hasBlinked.value = true;
-            livenessStatus.value = 'VERIFIED';
-          }
-          lastEyeDist.value = avgDist;
-        }
-
         // Draw landmarks for "pro" look
         const resizedDetection = faceapi.resizeResults(detection, displaySize!);
         if (ctx) {
@@ -199,7 +167,7 @@ const handleVideoPlay = () => {
         }
         faceTooFar.value = false;
 
-        if (detection.descriptor && livenessStatus.value === 'VERIFIED') {
+        if (detection.descriptor) {
           if (!isSampling.value && samples.value.length < REQUIRED_SAMPLES) {
             isSampling.value = true;
           }
@@ -335,15 +303,6 @@ onUnmounted(() => stopCamera());
         <div v-else-if="faceTooFar" class="status-badge info">
           MOVE CLOSER
         </div>
-        <div v-else-if="livenessStatus === 'ALIGN'" class="status-badge info pulse">
-          CENTER YOUR FACE
-        </div>
-        <div v-else-if="livenessStatus === 'BLINK'" class="status-badge success pulse-fast">
-          BLINK NOW
-        </div>
-        <div v-else-if="livenessStatus === 'VERIFIED'" class="status-badge success">
-          LIVENESS VERIFIED
-        </div>
       </div>
 
       <video ref="videoRef" autoplay muted playsinline @play="handleVideoPlay"></video>
@@ -465,20 +424,6 @@ onUnmounted(() => stopCamera());
   color: var(--accent-green);
   border: 1px solid var(--accent-green);
   box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
-}
-
-.pulse {
-  animation: pulse-border 2s infinite;
-}
-
-.pulse-fast {
-  animation: pulse-border 1s infinite;
-}
-
-@keyframes pulse-border {
-  0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
 }
 
 @keyframes fadeIn {
