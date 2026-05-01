@@ -14,24 +14,16 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'Invalid API Key' });
   }
 
-  if (!faceDescriptor) {
-    throw createError({ statusCode: 400, statusMessage: 'Face data missing' });
+  if (!faceDescriptor || !email) {
+    throw createError({ statusCode: 400, statusMessage: 'Face data and email are required' });
   }
 
-  const matchedUser = await findMatchingUserByFace(faceDescriptor, devUserId);
+  const matchedUser = await findMatchingUserByFace(faceDescriptor, email, devUserId);
 
   if (!matchedUser) {
     return {
       success: false,
-      message: 'No match found'
-    };
-  }
-
-  // If an email was provided, ensure it matches the recognized face
-  if (email && matchedUser.username !== email) {
-    return {
-      success: false,
-      message: 'Face does not match the provided email'
+      message: 'Biometric verification failed'
     };
   }
 

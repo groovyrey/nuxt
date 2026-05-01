@@ -4,7 +4,14 @@ import { createSession, findMatchingUserByFace, EUCLIDEAN_THRESHOLD, parseDescri
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
-    const { faceDescriptor, faceImage, username: targetUsername } = body;
+    const { faceDescriptor, username } = body;
+
+    if (!username) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Username is required for biometric authentication',
+      });
+    }
 
     if (!faceDescriptor || !Array.isArray(faceDescriptor)) {
       throw createError({
@@ -13,49 +20,14 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    let finalUsername = '';
-
-    if (targetUsername) {
-      const db = useDb();
-      const [rows] = await db.execute(
-        'SELECT username, face_descriptor FROM users WHERE username = ? AND face_descriptor IS NOT NULL',
-        [targetUsername]
-      );
-      const users = rows as any[];
-      
-      if (users.length === 0) {
-        throw createError({ statusCode: 404, statusMessage: 'Biometric profile not found' });
-      }
-
-      const user = users[0];
-      const storedDescriptors = parseDescriptor(user.face_descriptor);
-      
-      const inputDescriptors = Array.isArray(faceDescriptor[0]) 
-        ? (faceDescriptor as number[][]) 
-        : [faceDescriptor as number[]];
-
-      const distance = storedDescriptors ? compareManyToMany(inputDescriptors, storedDescriptors) : Infinity;
-
-      if (distance >= EUCLIDEAN_THRESHOLD) {
-        throw createError({ statusCode: 401, statusMessage: 'Biometric verification failed' });
-      }
-      finalUsername = user.username;
-    } else {
-      // Standard Mode: Find any matching user
-      console.log('Discovery mode: searching database for biometric match...');
-      const matchedUser = await findMatchingUserByFace(faceDescriptor);
-      
-      if (matchedUser) {
-        finalUsername = matchedUser.username;
-      }
-
-      if (!finalUsername) {
-        throw createError({ statusCode: 401, statusMessage: 'Biometric signature not recognized. Please ensure your face is clearly visible.' });
-      }
+    const matchedUser = await findMatchingUserByFace(faceDescriptor, username);
+    
+    if (!matchedUser) {
+      throw createError({ statusCode: 401, statusMessage: 'Biometric verification failed' });
     }
 
-    await createSession(event, finalUsername);
-    return { success: true, username: finalUsername };
+    await createSession(event, matchedUser.username);
+    return { success: true, username: matchedUser.username };
   } catch (error: any) {
     console.error('FACE_LOGIN_CRITICAL_ERROR:', {
       message: error.message,

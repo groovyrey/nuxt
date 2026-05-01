@@ -78,8 +78,8 @@ const faceCaptured = ref(false);
 const detectorRef = ref(null);
 
 onMounted(() => {
-  if (!apiKey || !redirectUrl) {
-    error.value = 'Invalid verification request. Missing API Key or Redirect URL.';
+  if (!apiKey || !redirectUrl || !email) {
+    error.value = 'Invalid verification request. Missing API Key, Email, or Redirect URL.';
     loading.value = false;
     return;
   }

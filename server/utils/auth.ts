@@ -146,7 +146,7 @@ export function compareManyToMany(inputs: number[][], stored: number[][]) {
   return minDistance;
 }
 
-export const findMatchingUserByFace = async (faceDescriptor: number[] | number[][], developerId?: string) => {
+export const findMatchingUserByFace = async (faceDescriptor: number[] | number[][], targetIdentifier: string, developerId?: string) => {
   const db = useDb();
   
   let query: string;
@@ -154,11 +154,12 @@ export const findMatchingUserByFace = async (faceDescriptor: number[] | number[]
   
   if (developerId) {
     // Search in external_users table for API users
-    query = 'SELECT email as username, face_descriptor FROM external_users WHERE developer_id = ? AND face_descriptor IS NOT NULL';
-    params = [developerId];
+    query = 'SELECT email as username, face_descriptor FROM external_users WHERE developer_id = ? AND email = ? AND face_descriptor IS NOT NULL';
+    params = [developerId, targetIdentifier];
   } else {
     // Search in native users table
-    query = 'SELECT username, face_descriptor FROM users WHERE face_descriptor IS NOT NULL';
+    query = 'SELECT username, face_descriptor FROM users WHERE username = ? AND face_descriptor IS NOT NULL';
+    params = [targetIdentifier];
   }
 
   const [rows] = await db.execute(query, params);
@@ -166,28 +167,21 @@ export const findMatchingUserByFace = async (faceDescriptor: number[] | number[]
 
   if (users.length === 0) return null;
 
+  const user = users[0];
+  const storedDescriptors = parseDescriptor(user.face_descriptor);
+  if (!storedDescriptors) return null;
+
   const inputDescriptors = Array.isArray(faceDescriptor[0]) 
     ? (faceDescriptor as number[][]) 
     : [faceDescriptor as number[]];
 
-  let matchedUser = null;
-  let minDistance = Infinity;
-
-  for (const user of users) {
-    const storedDescriptors = parseDescriptor(user.face_descriptor);
-    if (!storedDescriptors) continue;
-
-    const distance = compareManyToMany(inputDescriptors, storedDescriptors);
-    
-    if (distance < minDistance && distance < EUCLIDEAN_THRESHOLD) {
-      minDistance = distance;
-      matchedUser = user;
-    }
+  const distance = compareManyToMany(inputDescriptors, storedDescriptors);
+  
+  if (distance < EUCLIDEAN_THRESHOLD) {
+    console.log(`[MATCH] User: ${user.username}, Distance: ${distance.toFixed(4)}`);
+    return user;
   }
 
-  if (matchedUser) {
-    console.log(`[MATCH] User: ${matchedUser.username}, Distance: ${minDistance.toFixed(4)}`);
-  }
-
-  return matchedUser;
+  console.log(`[NO MATCH] User: ${user.username}, Distance: ${distance.toFixed(4)} (Threshold: ${EUCLIDEAN_THRESHOLD})`);
+  return null;
 };

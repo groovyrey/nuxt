@@ -60,7 +60,7 @@ redirect_url : Where to return after enrollment success</code></pre>
           <div class="code-block">
             <pre><code class="language-yaml"># URL Parameters
 api_key      : Your Luface API Key (Required)
-email        : (Optional) Enforce match for this specific email
+email        : User's email to verify against (Required)
 redirect_url : Where to return after verification success</code></pre>
           </div>
         </div>
@@ -73,9 +73,27 @@ redirect_url : Where to return after verification success</code></pre>
         <div class="endpoint-item">
           <div class="endpoint-header">
             <span class="method post">POST</span>
+            <code>/api/v1/identify</code>
+          </div>
+          <span class="endpoint-desc">Targeted biometric identification</span>
+          <div class="code-block">
+            <pre><code class="language-json">// Request Header
+X-API-Key: lf_...
+
+// Request Body
+{
+  "email": "user@example.com",
+  "faceDescriptor": [0.12, -0.05, 0.88, ...]
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="endpoint-item">
+          <div class="endpoint-header">
+            <span class="method post">POST</span>
             <code>/api/v1/verify-session</code>
           </div>
-          <span class="endpoint-desc">Verify a captured face descriptor</span>
+          <span class="endpoint-desc">Verify a captured face descriptor against a specific email</span>
           <div class="code-block">
             <pre><code class="language-json">// Request Header
 X-API-Key: lf_...

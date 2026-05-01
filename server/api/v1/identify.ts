@@ -20,16 +20,16 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event);
-  const { faceDescriptor } = body;
+  const { faceDescriptor, email } = body;
 
-  if (!faceDescriptor) {
+  if (!faceDescriptor || !email) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'faceDescriptor is required'
+      statusMessage: 'faceDescriptor and email are required'
     });
   }
 
-  const matchedUser = await findMatchingUserByFace(faceDescriptor, userId);
+  const matchedUser = await findMatchingUserByFace(faceDescriptor, email, userId);
 
   if (!matchedUser) {
     return {
