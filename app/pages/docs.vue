@@ -188,14 +188,7 @@ import {
   Code as CodeIcon,
   LogOut as LogOutIcon
 } from 'lucide-vue-next';
-import hljs from 'highlight.js';
-import 'highlight.js/styles/tokyo-night-dark.css';
 
-onMounted(() => {
-  document.querySelectorAll('pre code').forEach((block) => {
-    hljs.highlightElement(block);
-  });
-});
 </script>
 
 <style scoped>
