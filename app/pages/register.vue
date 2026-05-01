@@ -181,6 +181,7 @@ import {
 } from 'lucide-vue-next';
 
 const { fetchUser } = useAuth();
+const route = useRoute();
 const currentStep = ref(1);
 const loading = ref(false);
 const error = ref('');
@@ -199,8 +200,8 @@ const capturedImage = ref(null);
 const confirmPassword = ref('');
 
 const form = ref({
-  username: '',
-  email: '',
+  username: route.query.username || '',
+  email: route.query.email || '',
   password: '',
   age: null,
   gender: 'other'
@@ -279,16 +280,31 @@ const handleRegister = async () => {
   error.value = '';
   
   try {
-    await $fetch('/api/auth/register', {
+    const payload = {
+      ...form.value,
+      faceDescriptor: capturedDescriptor.value,
+      faceImage: capturedImage.value
+    };
+
+    // If we have an API key, we might be using the API registration
+    const registerUrl = route.query.api_key ? '/api/v1/register' : '/api/auth/register';
+    const headers = route.query.api_key ? { 'X-API-Key': route.query.api_key } : {};
+
+    await $fetch(registerUrl, {
       method: 'POST',
-      body: {
-        ...form.value,
-        faceDescriptor: capturedDescriptor.value,
-        faceImage: capturedImage.value
-      }
+      headers,
+      body: payload
     });
     
     toast.success('Profile Created', { description: 'Welcome to Luface' });
+    
+    if (route.query.redirect_url) {
+      const url = new URL(route.query.redirect_url);
+      url.searchParams.append('status', 'success');
+      window.location.href = url.toString();
+      return;
+    }
+
     await fetchUser();
     navigateTo('/');
   } catch (err) {
