@@ -280,6 +280,10 @@ useHead({
   font-size: 0.76rem;
   font-weight: 900;
   text-decoration: none;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  text-align: center;
   transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -647,6 +651,7 @@ useHead({
 
 .about-footer .btn-primary {
   flex: 0 0 auto;
+  white-space: normal;
 }
 
 .reveal-section {
@@ -729,6 +734,10 @@ useHead({
   .about-footer {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .about-footer .btn-primary {
+    align-self: stretch;
   }
 }
 

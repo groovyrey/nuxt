@@ -21,6 +21,9 @@ onMounted(() => {
 :root {
   --bg-app: #050505;
   --bg-card: #0c0c0c;
+  --bg-black: #050505;
+  --card-black: var(--bg-card);
+  --input-bg: rgba(255, 255, 255, 0.035);
   --accent-green: #00ff88;
   --accent-green-rgb: 0, 255, 136;
   --error-red: #ff4444;
@@ -36,6 +39,9 @@ onMounted(() => {
 :root.light-theme {
   --bg-app: #f5f5f7;
   --bg-card: #ffffff;
+  --bg-black: #ffffff;
+  --card-black: var(--bg-card);
+  --input-bg: rgba(0, 0, 0, 0.035);
   --accent-green: #00a854;
   --accent-green-rgb: 0, 168, 84;
   --text-main: #1d1d1f;
@@ -84,4 +90,3 @@ body {
 [data-sonner-toast][data-type='success'] { border-left: 4px solid var(--accent-green) !important; }
 [data-sonner-toast][data-type='error'] { border-left: 4px solid var(--error-red) !important; }
 </style>
-

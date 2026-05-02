@@ -322,8 +322,10 @@ const handleRegister = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: clamp(1rem, 4vw, 1.5rem);
   background: var(--bg-app);
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .auth-card {
@@ -332,10 +334,11 @@ const handleRegister = async () => {
   background: var(--card-black);
   border: 1px solid var(--border-color);
   border-radius: 32px;
-  padding: 3rem;
+  padding: clamp(1.5rem, 5vw, 3rem);
   box-shadow: 0 40px 100px var(--shadow-color);
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* Step Progress */
@@ -345,6 +348,7 @@ const handleRegister = async () => {
   margin-bottom: 3rem;
   position: relative;
   padding: 0 10px;
+  min-width: 0;
 }
 
 .progress-bar-bg {
@@ -371,6 +375,8 @@ const handleRegister = async () => {
   gap: 8px;
   z-index: 2;
   position: relative;
+  min-width: 0;
+  flex: 1;
 }
 
 .step-number {
@@ -406,6 +412,9 @@ const handleRegister = async () => {
   letter-spacing: 0.1em;
   color: var(--text-dim);
   text-transform: uppercase;
+  max-width: 100%;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .step-item.active .step-text {
@@ -419,8 +428,9 @@ const handleRegister = async () => {
 }
 
 .auth-header h1 {
-  font-size: 1.5rem;
+  font-size: clamp(1.5rem, 6vw, 1.8rem);
   margin: 0;
+  letter-spacing: 0;
 }
 
 .subtitle {
@@ -450,6 +460,7 @@ const handleRegister = async () => {
 .scanner-wrapper {
   width: 100%;
   aspect-ratio: 1;
+  max-height: min(62vh, 410px);
   border-radius: 24px;
   overflow: hidden;
   border: 1px solid var(--border-color);
@@ -491,6 +502,8 @@ const handleRegister = async () => {
   font-weight: 800;
   letter-spacing: 0.2em;
   font-size: 0.8rem;
+  text-align: center;
+  padding: 0 1rem;
 }
 
 .retry-link {
@@ -526,9 +539,13 @@ const handleRegister = async () => {
 .form-row {
   display: flex;
   gap: 1rem;
+  min-width: 0;
 }
 
-.half { flex: 1; }
+.half {
+  flex: 1;
+  min-width: 0;
+}
 
 label {
   font-size: 0.6rem;
@@ -563,6 +580,7 @@ input:focus, select:focus {
   display: flex;
   gap: 1rem;
   margin-top: 2.5rem;
+  min-width: 0;
 }
 
 .next-btn, .submit-btn {
@@ -580,6 +598,9 @@ input:focus, select:focus {
   align-items: center;
   justify-content: center;
   gap: 12px;
+  min-width: 0;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .next-btn:disabled, .submit-btn:disabled {
@@ -598,6 +619,8 @@ input:focus, select:focus {
   font-weight: 800;
   letter-spacing: 0.1em;
   cursor: pointer;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .back-btn:hover:not(:disabled) {
@@ -613,6 +636,7 @@ input:focus, select:focus {
   display: flex;
   align-items: center;
   gap: 10px;
+  overflow-wrap: anywhere;
 }
 
 .auth-footer {
@@ -688,9 +712,45 @@ input:focus, select:focus {
 @media (max-width: 480px) {
   .auth-card {
     padding: 2rem 1.5rem;
-    border-radius: 0;
+    border-radius: 18px;
     border: none;
     background: transparent;
+  }
+
+  .auth-container {
+    align-items: flex-start;
+    padding: 1rem;
+  }
+
+  .step-progress {
+    margin-bottom: 2rem;
+    padding: 0;
+  }
+
+  .step-text {
+    font-size: 0.5rem;
+  }
+
+  .scanner-wrapper {
+    border-radius: 14px;
+  }
+
+  .form-row,
+  .action-bar {
+    flex-direction: column;
+  }
+
+  .next-btn,
+  .submit-btn,
+  .back-btn {
+    width: 100%;
+    flex: none;
+    padding: 1rem;
+  }
+
+  .auth-footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
   }
 }
 </style>

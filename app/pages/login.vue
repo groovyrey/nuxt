@@ -185,8 +185,10 @@ const handleFaceDetection = async (data) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: clamp(1rem, 4vw, 1.5rem);
   background: var(--bg-app);
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .auth-card {
@@ -195,13 +197,20 @@ const handleFaceDetection = async (data) => {
   background: var(--card-black);
   border: 1px solid var(--border-color);
   border-radius: 24px;
-  padding: 2.5rem;
+  padding: clamp(1.5rem, 5vw, 2.5rem);
   box-shadow: 0 40px 100px var(--shadow-color);
+  box-sizing: border-box;
 }
 
 .auth-header {
   text-align: center;
   margin-bottom: 2rem;
+}
+
+.auth-header h1 {
+  margin: 0;
+  font-size: clamp(1.65rem, 7vw, 2.25rem);
+  letter-spacing: 0;
 }
 
 .auth-logo {
@@ -224,6 +233,7 @@ const handleFaceDetection = async (data) => {
   margin-bottom: 3rem;
   position: relative;
   padding: 0 10px;
+  min-width: 0;
 }
 
 .progress-bar-bg {
@@ -250,6 +260,7 @@ const handleFaceDetection = async (data) => {
   gap: 8px;
   z-index: 2;
   position: relative;
+  min-width: 0;
 }
 
 .step-number {
@@ -285,6 +296,8 @@ const handleFaceDetection = async (data) => {
   letter-spacing: 0.1em;
   color: var(--text-dim);
   text-transform: uppercase;
+  max-width: 100%;
+  text-align: center;
 }
 
 .step-item.active .step-text {
@@ -346,6 +359,8 @@ input:focus {
   align-items: center;
   justify-content: center;
   gap: 10px;
+  min-width: 0;
+  text-align: center;
 }
 
 .submit-btn:hover:not(:disabled) {
@@ -376,6 +391,16 @@ input:focus {
   font-size: 0.65rem;
   font-weight: 700;
   color: var(--accent-green);
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.user-context-badge span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .reset-btn {
@@ -392,6 +417,7 @@ input:focus {
 .face-scanner-wrapper {
   width: 100%;
   aspect-ratio: 1;
+  max-height: min(64vh, 390px);
   background: #000;
   border-radius: 20px;
   overflow: hidden;
@@ -421,6 +447,7 @@ input:focus {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  overflow-wrap: anywhere;
 }
 
 .auth-footer {
@@ -455,13 +482,26 @@ input:focus {
 @media (max-width: 480px) {
   .auth-card {
     padding: 1.5rem;
-    border-radius: 0;
+    border-radius: 18px;
     border: none;
     background: transparent;
     box-shadow: none;
   }
   .auth-container {
-    padding: 0;
+    align-items: flex-start;
+    padding: 1rem;
+  }
+
+  .auth-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .step-progress {
+    margin-bottom: 2rem;
+  }
+
+  .face-scanner-wrapper {
+    border-radius: 14px;
   }
 }
 </style>
