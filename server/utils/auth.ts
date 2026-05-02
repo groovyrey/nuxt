@@ -14,7 +14,8 @@ export const comparePassword = async (password: string, hash: string) => {
 export const createSession = async (event: any, username: string) => {
   const db = useDb();
   const sessionId = uuidv4();
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(); // 7 days
+  const expiresDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+  const expiresAt = expiresDate.toISOString(); // 7 days
   
   await db.execute(
     'INSERT INTO sessions (id, username, expires_at) VALUES (?, ?, ?)',
@@ -31,7 +32,7 @@ export const createSession = async (event: any, username: string) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    expires: expiresAt
+    expires: expiresDate
   });
   
   return sessionId;
