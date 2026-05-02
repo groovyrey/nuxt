@@ -7,6 +7,7 @@
 
       <!-- Desktop -->
       <div class="nav-desktop">
+        <NuxtLink to="/about" class="nav-link">ABOUT</NuxtLink>
         <NuxtLink to="/docs" class="nav-link">DOCS</NuxtLink>
         <template v-if="user">
           <NuxtLink to="/keys" class="nav-link">API KEYS</NuxtLink>
@@ -36,6 +37,7 @@
     <Transition name="fade">
       <div v-if="isMenuOpen" class="mobile-overlay" @click="isMenuOpen = false">
         <div class="mobile-content" @click.stop>
+          <NuxtLink to="/about" class="m-link">ABOUT</NuxtLink>
           <NuxtLink to="/docs" class="m-link">DOCS</NuxtLink>
           <template v-if="user">
             <NuxtLink to="/keys" class="m-link">API KEYS</NuxtLink>

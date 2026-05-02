@@ -1,95 +1,87 @@
 <template>
   <div class="api-key-manager">
-    <div class="section-header">
-      <div class="header-actions">
-        <button v-if="activeTab === 'keys'" @click="showCreate = !showCreate" class="btn-sm">
+    <!-- API KEYS SECTION -->
+    <section class="manager-section">
+      <div class="section-header">
+        <div class="title-with-icon">
+          <KeyIcon :size="16" class="accent" />
+          <h3>API KEYS</h3>
+        </div>
+        <button @click="showCreate = !showCreate" class="btn-sm">
           {{ showCreate ? 'CANCEL' : 'GENERATE NEW KEY' }}
         </button>
-        <button v-if="activeTab === 'webhooks'" @click="showWebhooks = !showWebhooks" class="btn-sm">
-          {{ showWebhooks ? 'CANCEL' : 'ADD WEBHOOK' }}
-        </button>
       </div>
-    </div>
 
-    <!-- Tabs -->
-    <div class="tabs-nav">
-      <button @click="activeTab = 'keys'" :class="{ active: activeTab === 'keys' }">
-        <KeyIcon :size="12" /> KEYS
-      </button>
-      <button @click="activeTab = 'usage'" :class="{ active: activeTab === 'usage' }">
-        <ActivityIcon :size="12" /> USAGE
-      </button>
-      <button @click="activeTab = 'webhooks'" :class="{ active: activeTab === 'webhooks' }">
-        <WebhookIcon :size="12" /> WEBHOOKS
-      </button>
-      <button @click="activeTab = 'audit'" :class="{ active: activeTab === 'audit' }">
-        <HistoryIcon :size="12" /> AUDIT
-      </button>
-    </div>
-
-    <div class="tab-content">
-      <!-- API KEYS TAB -->
-      <div v-if="activeTab === 'keys'" class="tab-pane">
-        <!-- Create Key Form -->
-        <Transition name="fade-slide">
-          <div v-if="showCreate" class="create-form">
-            <div class="form-group">
-              <label>KEY NAME</label>
-              <div class="input-with-action">
-                <input v-model="newKeyName" type="text" placeholder="e.g., Production App" :disabled="creating" />
-                <button @click="createKey" :disabled="creating || !newKeyName" class="btn-create">
-                  <PlusIcon v-if="!creating" :size="16" />
-                  <Loader2Icon v-else class="spin" :size="16" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </Transition>
-
-        <!-- New Key Reveal -->
-        <Transition name="fade-slide">
-          <div v-if="revealedKey" class="reveal-box">
-            <div class="reveal-header">
-              <AlertTriangleIcon :size="14" />
-              <span>COPY THIS KEY NOW. IT WON'T BE SHOWN AGAIN.</span>
-            </div>
-            <div class="key-display">
-              <code>{{ revealedKey }}</code>
-              <button @click="copyKey(revealedKey)" class="copy-btn">
-                <CopyIcon :size="14" v-if="!copied" />
-                <CheckIcon :size="14" v-else />
+      <!-- Create Key Form -->
+      <Transition name="fade-slide">
+        <div v-if="showCreate" class="create-form">
+          <div class="form-group">
+            <label>KEY NAME</label>
+            <div class="input-with-action">
+              <input v-model="newKeyName" type="text" placeholder="e.g., Production App" :disabled="creating" />
+              <button @click="createKey" :disabled="creating || !newKeyName" class="btn-create">
+                <PlusIcon v-if="!creating" :size="16" />
+                <Loader2Icon v-else class="spin" :size="16" />
               </button>
             </div>
           </div>
-        </Transition>
+        </div>
+      </Transition>
 
-        <div class="keys-list">
-          <div v-if="loading" class="loading-state">
-            <Loader2Icon class="spin" :size="24" />
+      <!-- New Key Reveal -->
+      <Transition name="fade-slide">
+        <div v-if="revealedKey" class="reveal-box">
+          <div class="reveal-header">
+            <AlertTriangleIcon :size="14" />
+            <span>COPY THIS KEY NOW. IT WON'T BE SHOWN AGAIN.</span>
           </div>
-          <div v-else-if="keys.length === 0" class="empty-state">NO ACTIVE API KEYS</div>
-          <div v-for="key in keys" :key="key.id" class="key-item">
-            <div class="key-info">
-              <div class="key-main">
-                <span class="key-name">{{ key.name }}</span>
-                <span class="key-prefix"><code>{{ key.key_prefix }}••••••••</code></span>
-              </div>
-              <div class="key-settings">
-                <label>THRESHOLD: </label>
-                <select :value="key.threshold" @change="updateThreshold(key.id, $event.target.value)">
-                  <option :value="0.35">Strict (0.35)</option>
-                  <option :value="0.45">Standard (0.45)</option>
-                  <option :value="0.55">Relaxed (0.55)</option>
-                </select>
-              </div>
+          <div class="key-display">
+            <code>{{ revealedKey }}</code>
+            <button @click="copyKey(revealedKey)" class="copy-btn">
+              <CopyIcon :size="14" v-if="!copied" />
+              <CheckIcon :size="14" v-else />
+            </button>
+          </div>
+        </div>
+      </Transition>
+
+      <div class="keys-list">
+        <div v-if="loading" class="loading-state">
+          <Loader2Icon class="spin" :size="24" />
+        </div>
+        <div v-else-if="keys.length === 0" class="empty-state">NO ACTIVE API KEYS</div>
+        <div v-for="key in keys" :key="key.id" class="key-item">
+          <div class="key-info">
+            <div class="key-main">
+              <span class="key-name">{{ key.name }}</span>
+              <span class="key-prefix"><code>{{ key.key_prefix }}••••••••</code></span>
             </div>
-            <button @click="deleteKey(key.id)" class="delete-btn"><Trash2Icon :size="14" /></button>
+            <div class="key-settings">
+              <label>THRESHOLD: </label>
+              <select :value="key.threshold" @change="updateThreshold(key.id, $event.target.value)">
+                <option :value="0.35">Strict (0.35)</option>
+                <option :value="0.45">Standard (0.45)</option>
+                <option :value="0.55">Relaxed (0.55)</option>
+              </select>
+            </div>
           </div>
+          <button @click="deleteKey(key.id)" class="delete-btn"><Trash2Icon :size="14" /></button>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- USAGE SECTION -->
+    <section class="manager-section">
+      <div class="section-header">
+        <div class="title-with-icon">
+          <ActivityIcon :size="16" class="accent" />
+          <h3>RECENT USAGE</h3>
         </div>
       </div>
 
-      <!-- USAGE TAB -->
-      <div v-else-if="activeTab === 'usage'" class="tab-pane">
+      <div class="usage-content">
         <div v-if="loadingUsage" class="loading-state"><Loader2Icon class="spin" :size="24" /></div>
         <div v-else-if="usage.length === 0" class="empty-state">NO RECENT ACTIVITY</div>
         <div v-else class="usage-stats">
@@ -102,47 +94,72 @@
           </div>
         </div>
       </div>
+    </section>
 
-      <!-- WEBHOOKS TAB -->
-      <div v-else-if="activeTab === 'webhooks'" class="tab-pane">
-        <Transition name="fade-slide">
-          <div v-if="showWebhooks" class="create-form">
-            <div class="form-group">
-              <label>TARGET URL</label>
-              <input v-model="newWebhook.url" type="url" placeholder="https://api.yourdomain.com/webhook" />
-            </div>
-            <button @click="createWebhook" :disabled="creatingWebhook || !newWebhook.url" class="btn-create-full">
-              {{ creatingWebhook ? 'SAVING...' : 'ADD WEBHOOK' }}
-            </button>
-          </div>
-        </Transition>
+    <div class="section-divider"></div>
 
-        <div class="webhooks-list">
-          <div v-for="wh in webhooks" :key="wh.id" class="webhook-item">
-            <div class="webhook-info">
-              <div class="webhook-url">{{ wh.url }}</div>
-              <div class="webhook-events">{{ typeof wh.events === 'string' ? JSON.parse(wh.events).join(', ') : (Array.isArray(wh.events) ? wh.events.join(', ') : wh.events) }}</div>
-            </div>
-            <button @click="deleteWebhook(wh.id)" class="delete-btn"><Trash2Icon :size="14" /></button>
+    <!-- WEBHOOKS SECTION -->
+    <section class="manager-section">
+      <div class="section-header">
+        <div class="title-with-icon">
+          <WebhookIcon :size="16" class="accent" />
+          <h3>WEBHOOKS</h3>
+        </div>
+        <button @click="showWebhooks = !showWebhooks" class="btn-sm">
+          {{ showWebhooks ? 'CANCEL' : 'ADD WEBHOOK' }}
+        </button>
+      </div>
+
+      <Transition name="fade-slide">
+        <div v-if="showWebhooks" class="create-form">
+          <div class="form-group">
+            <label>TARGET URL</label>
+            <input v-model="newWebhook.url" type="url" placeholder="https://api.yourdomain.com/webhook" />
           </div>
+          <button @click="createWebhook" :disabled="creatingWebhook || !newWebhook.url" class="btn-create-full">
+            {{ creatingWebhook ? 'SAVING...' : 'ADD WEBHOOK' }}
+          </button>
+        </div>
+      </Transition>
+
+      <div class="webhooks-list">
+        <div v-if="loadingWebhooks" class="loading-state"><Loader2Icon class="spin" :size="24" /></div>
+        <div v-else-if="webhooks.length === 0" class="empty-state">NO WEBHOOKS CONFIGURED</div>
+        <div v-for="wh in webhooks" :key="wh.id" class="webhook-item">
+          <div class="webhook-info">
+            <div class="webhook-url">{{ wh.url }}</div>
+            <div class="webhook-events">{{ typeof wh.events === 'string' ? JSON.parse(wh.events).join(', ') : (Array.isArray(wh.events) ? wh.events.join(', ') : wh.events) }}</div>
+          </div>
+          <button @click="deleteWebhook(wh.id)" class="delete-btn"><Trash2Icon :size="14" /></button>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- AUDIT LOGS SECTION -->
+    <section class="manager-section">
+      <div class="section-header">
+        <div class="title-with-icon">
+          <HistoryIcon :size="16" class="accent" />
+          <h3>AUDIT LOGS</h3>
         </div>
       </div>
 
-      <!-- AUDIT LOGS TAB -->
-      <div v-else-if="activeTab === 'audit'" class="tab-pane">
-        <div class="audit-list">
-          <div v-for="log in auditLogs" :key="log.id" class="audit-item">
-            <div class="audit-dot"></div>
-            <div class="audit-main">
-              <div class="audit-action">{{ log.action }}</div>
-              <div class="audit-time">{{ formatDate(log.timestamp) }}</div>
-            </div>
-            <div v-if="log.ip_address" class="audit-ip">{{ log.ip_address }}</div>
+      <div class="audit-list">
+        <div v-if="auditLogs.length === 0" class="empty-state">NO AUDIT LOGS FOUND</div>
+        <div v-for="log in auditLogs" :key="log.id" class="audit-item">
+          <div class="audit-dot"></div>
+          <div class="audit-main">
+            <div class="audit-action">{{ log.action }}</div>
+            <div class="audit-time">{{ formatDate(log.timestamp) }}</div>
           </div>
+          <div v-if="log.ip_address" class="audit-ip">{{ log.ip_address }}</div>
         </div>
       </div>
-    </div>
+    </section>
   </div>
+
 </template>
 
 <script setup>
@@ -175,7 +192,6 @@ const showWebhooks = ref(false);
 const newKeyName = ref('');
 const revealedKey = ref(null);
 const copied = ref(false);
-const activeTab = ref('keys');
 
 const newWebhook = ref({ url: '', events: ['face.identified'] });
 const creatingWebhook = ref(false);
@@ -325,43 +341,18 @@ onMounted(() => {
 .api-key-manager {
   display: flex;
   flex-direction: column;
+  gap: 3rem;
+}
+
+.manager-section {
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
 }
 
-.tabs-nav {
-  display: flex;
-  gap: 10px;
-  border-bottom: 1px solid var(--border-dim);
-  margin-bottom: 1.5rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  padding-bottom: 2px;
-}
-
-.tabs-nav::-webkit-scrollbar {
-  display: none;
-}
-
-.tabs-nav button {
-  background: transparent;
-  border: none;
-  color: var(--text-dim);
-  padding: 0.8rem 1rem;
-  font-size: 0.65rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.tabs-nav button.active {
-  color: var(--accent-green);
-  border-bottom-color: var(--accent-green);
+.section-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border-dim), transparent);
 }
 
 .key-settings {
