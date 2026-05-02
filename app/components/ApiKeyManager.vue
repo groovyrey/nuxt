@@ -77,9 +77,9 @@
               <div class="key-settings">
                 <label>THRESHOLD: </label>
                 <select :value="key.threshold" @change="updateThreshold(key.id, $event.target.value)">
-                  <option value="0.35">Strict (0.35)</option>
-                  <option value="0.45">Standard (0.45)</option>
-                  <option value="0.55">Relaxed (0.55)</option>
+                  <option :value="0.35">Strict (0.35)</option>
+                  <option :value="0.45">Standard (0.45)</option>
+                  <option :value="0.55">Relaxed (0.55)</option>
                 </select>
               </div>
             </div>
@@ -121,7 +121,7 @@
           <div v-for="wh in webhooks" :key="wh.id" class="webhook-item">
             <div class="webhook-info">
               <div class="webhook-url">{{ wh.url }}</div>
-              <div class="webhook-events">{{ JSON.parse(wh.events).join(', ') }}</div>
+              <div class="webhook-events">{{ typeof wh.events === 'string' ? JSON.parse(wh.events).join(', ') : (Array.isArray(wh.events) ? wh.events.join(', ') : wh.events) }}</div>
             </div>
             <button @click="deleteWebhook(wh.id)" class="delete-btn"><Trash2Icon :size="14" /></button>
           </div>
@@ -329,6 +329,14 @@ onMounted(() => {
   gap: 10px;
   border-bottom: 1px solid var(--border-dim);
   margin-bottom: 1.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 2px;
+}
+
+.tabs-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .tabs-nav button {
@@ -344,6 +352,7 @@ onMounted(() => {
   gap: 6px;
   border-bottom: 2px solid transparent;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .tabs-nav button.active {
@@ -438,6 +447,8 @@ onMounted(() => {
   font-weight: 700;
   font-size: 0.75rem;
   word-break: break-all;
+  flex: 1;
+  padding-right: 1rem;
 }
 
 .webhook-events {
@@ -467,6 +478,7 @@ onMounted(() => {
   background: var(--accent-green);
   border-radius: 50%;
   box-shadow: 0 0 8px var(--accent-green);
+  flex-shrink: 0;
 }
 
 .audit-main {
@@ -544,13 +556,32 @@ onMounted(() => {
   gap: 10px;
 }
 
-@media (max-width: 400px) {
+@media (max-width: 480px) {
   .input-with-action {
     flex-direction: column;
   }
   .btn-create {
     padding: 0.8rem;
     justify-content: center;
+  }
+  
+  .usage-item {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .usage-count {
+    text-align: left;
+  }
+
+  .webhook-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .webhook-item .delete-btn {
+    align-self: flex-end;
   }
 }
 
@@ -633,10 +664,17 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   transition: all 0.2s;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .key-item:hover {
   border-color: var(--border-color);
+}
+
+.key-info {
+  flex: 1;
+  min-width: 200px;
 }
 
 .key-main {
@@ -675,12 +713,13 @@ onMounted(() => {
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .delete-btn:hover {
-  background: rgba(255, 68, 68, 0.1);
-  color: #ff4444;
-  border-color: rgba(255, 68, 68, 0.2);
+  background: rgba(var(--error-red-rgb), 0.1);
+  color: var(--error-red);
+  border-color: rgba(var(--error-red-rgb), 0.2);
 }
 
 .loading-state, .empty-state {

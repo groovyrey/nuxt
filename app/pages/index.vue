@@ -1,17 +1,12 @@
 <template>
   <div v-if="user" class="min-h-screen app-container">
-    <header class="glass-header">
-      <div class="logo-area">
+    <div class="page-title-area">
+      <div class="title-with-status">
         <div class="status-dot" :class="{ 'active': isOnline }"></div>
-        <h1>LU<span class="accent">FACE</span></h1>
+        <h2>OPERATOR <span class="accent">DASHBOARD</span></h2>
       </div>
-      <div class="user-controls">
-        <span class="username-wrapper">
-          <UserIcon :size="14" class="icon-dim" />
-          <span class="username">{{ user.username }}</span>
-        </span>
-      </div>
-    </header>
+      <p class="subtitle">Secure biometric interface • System operational</p>
+    </div>
     
     <main class="content-grid">
       <div class="luface-card">
@@ -97,17 +92,6 @@
         </div>
       </div>
     </main>
-
-    <footer class="system-footer">
-      <div class="footer-line"></div>
-      <div class="footer-content">
-        <p>&copy; 2024 LUFACE SYSTEM • SECURE ACCESS ONLY</p>
-        <div class="footer-icons">
-          <GithubIcon :size="16" />
-          <TwitterIcon :size="16" />
-        </div>
-      </div>
-    </footer>
   </div>
   <div v-else-if="!isLoading" class="redirecting">
     <div class="spinner"></div>
@@ -169,124 +153,25 @@ watch(isLoading, (loading) => {
   min-height: 100vh;
 }
 
-.user-profile-display {
-  width: 100%;
-}
-
-.profile-header {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-  padding-bottom: 2rem;
+.page-title-area {
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
   border-bottom: 1px solid var(--border-dim);
 }
 
-.avatar-placeholder {
-  position: relative;
-  width: 80px;
-  height: 80px;
-  min-width: 80px;
-  background: linear-gradient(135deg, var(--accent-green), #00aadd);
-  border-radius: 50%;
+.title-with-status {
   display: flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 30px rgba(var(--accent-green-rgb), 0.2);
-}
-
-.avatar-overlay {
-  position: absolute;
-  bottom: -5px;
-  right: -5px;
-  background: var(--accent-green);
-  border-radius: 50%;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 3px solid var(--card-black);
-}
-
-.initials {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #000;
-}
-
-.profile-info h2 {
-  margin: 0;
-  font-size: 1.75rem;
-  letter-spacing: -0.02em;
-}
-
-.profile-info .email {
-  color: var(--text-dim);
-  margin: 4px 0 0;
-  font-size: 0.85rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.inline-icon {
-  opacity: 0.6;
-}
-
-.profile-details {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  background: var(--glass);
-  padding: 1rem;
-  border-radius: 12px;
-  border: 1px solid var(--border-dim);
-}
-
-.detail-item label {
-  font-size: 0.6rem;
-  color: var(--text-dim);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.detail-item span {
-  font-family: monospace;
-  font-size: 0.95rem;
-  word-break: break-all;
-}
-
-.glass-header {
-  padding: 1.5rem 0;
-  border-bottom: 1px solid var(--border-color);
-  margin-bottom: 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.logo-area {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  gap: 12px;
+  margin-bottom: 0.5rem;
 }
 
 .status-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   background: var(--text-dim);
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .status-dot.active {
@@ -294,55 +179,21 @@ watch(isLoading, (loading) => {
   box-shadow: 0 0 15px var(--accent-green);
 }
 
-h1 {
-  font-size: 1.25rem;
+.page-title-area h2 {
+  font-size: 1.5rem;
   font-weight: 800;
   margin: 0;
-  letter-spacing: 0.1em;
+  letter-spacing: -0.01em;
 }
 
-.accent { color: var(--accent-green); }
-
-.user-controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.username-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.icon-dim { opacity: 0.5; }
-
-.username {
+.subtitle {
   color: var(--text-dim);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-size: 0.85rem;
+  margin: 0;
 }
 
-.logout-btn {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  padding: 0.5rem 0.8rem;
-  border-radius: 6px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.logout-btn:hover {
-  border-color: #ff4444;
-  color: #ff4444;
-  background: rgba(255, 68, 68, 0.05);
+.user-profile-display {
+  width: 100%;
 }
 
 .content-grid {
@@ -436,15 +287,15 @@ h1 {
 }
 
 .danger-zone {
-  border-color: rgba(255, 68, 68, 0.2);
+  border-color: rgba(var(--error-red-rgb), 0.2);
   margin-top: auto;
 }
 
 .delete-btn-trigger {
   width: 100%;
   background: transparent;
-  border: 1px solid rgba(255, 68, 68, 0.3);
-  color: #ff4444;
+  border: 1px solid rgba(var(--error-red-rgb), 0.3);
+  color: var(--error-red);
   padding: 0.6rem;
   border-radius: 8px;
   font-size: 0.65rem;
@@ -454,8 +305,8 @@ h1 {
 }
 
 .delete-btn-trigger:hover {
-  background: rgba(255, 68, 68, 0.1);
-  border-color: #ff4444;
+  background: rgba(var(--error-red-rgb), 0.1);
+  border-color: var(--error-red);
 }
 
 .confirmation-box {
@@ -463,7 +314,7 @@ h1 {
 }
 
 .confirmation-box p {
-  color: #ff4444;
+  color: var(--error-red);
   font-size: 0.6rem;
   font-weight: 900;
   margin: 0.5rem 0;
@@ -478,7 +329,7 @@ h1 {
 
 .delete-btn-confirm {
   flex: 1;
-  background: #ff4444;
+  background: var(--error-red);
   color: #000;
   border: none;
   padding: 0.5rem;
@@ -498,40 +349,6 @@ h1 {
   font-size: 0.6rem;
   font-weight: 800;
   cursor: pointer;
-}
-
-.system-footer {
-  margin-top: 3rem;
-  padding-bottom: 1.5rem;
-}
-
-.footer-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.footer-line {
-  height: 1px;
-  background: linear-gradient(90deg, var(--accent-green), transparent);
-  margin-bottom: 1rem;
-  opacity: 0.2;
-}
-
-.system-footer p {
-  color: var(--text-dim);
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  margin: 0;
-}
-
-.footer-icons {
-  display: flex;
-  gap: 1rem;
-  color: var(--text-dim);
 }
 
 .spinner {

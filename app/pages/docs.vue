@@ -1,14 +1,12 @@
 <template>
-  <div class="docs-page">
-    <header class="docs-header">
-      <div class="header-content">
-        <div class="logo">
-          <ShieldCheckIcon :size="32" class="accent" />
-          <h1>LU<span class="accent">FACE</span> <span class="version">V1.0</span></h1>
-        </div>
-        <p>Biometric-as-a-Service Documentation</p>
+  <div class="docs-page app-container">
+    <div class="page-title-area">
+      <div class="title-with-icon">
+        <ShieldCheckIcon :size="32" class="accent" />
+        <h2>DOCUMENTATION <span class="version">V1.0</span></h2>
       </div>
-    </header>
+      <p class="subtitle">Biometric-as-a-Service • System Specifications</p>
+    </div>
 
     <nav class="docs-nav">
       <div class="nav-content">
@@ -199,35 +197,25 @@ import {
   overflow-x: hidden;
 }
 
-.docs-header {
-  background: var(--bg-black);
-  border-bottom: 1px solid var(--border-dim);
-  padding: 3rem 1rem;
-}
-
-.header-content {
-  max-width: 1000px;
+.app-container {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-.logo {
+.page-title-area {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.title-with-icon {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 0.75rem;
-}
-
-.logo h1 {
-  font-size: 1.75rem;
-  letter-spacing: 0.15em;
-  font-weight: 950;
-  margin: 0;
-}
-
-@media (min-width: 768px) {
-  .docs-header { padding: 4rem 1.5rem; }
-  .logo h1 { font-size: 2.5rem; letter-spacing: 0.25em; }
-  .logo { gap: 16px; }
+  gap: 15px;
+  margin-bottom: 0.5rem;
 }
 
 .version {
@@ -238,36 +226,31 @@ import {
   border-radius: 4px;
   vertical-align: middle;
   letter-spacing: normal;
+  margin-left: 10px;
 }
 
-.docs-header p {
+.subtitle {
   color: var(--text-dim);
   font-size: 0.85rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  font-weight: 800;
   margin: 0;
-}
-
-@media (min-width: 768px) {
-  .docs-header p { font-size: 1rem; letter-spacing: 0.1em; }
 }
 
 .docs-nav {
   position: sticky;
-  top: 0;
+  top: 60px; /* Adjust based on Navbar height */
   background: var(--bg-black);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-dim);
   z-index: 100;
+  margin: 0 -1.5rem;
 }
 
 .nav-content {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   gap: 1.5rem;
-  padding: 1rem;
+  padding: 1rem 1.5rem;
   overflow-x: auto;
   white-space: nowrap;
   -webkit-overflow-scrolling: touch;
@@ -299,13 +282,14 @@ import {
 }
 
 .docs-main {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 3rem 1rem 6rem;
+  padding: 3rem 1.5rem 6rem;
   display: flex;
   flex-direction: column;
   gap: 4rem;
 }
+
 
 @media (min-width: 768px) {
   .docs-main { padding: 4rem 1.5rem 8rem; gap: 6rem; }

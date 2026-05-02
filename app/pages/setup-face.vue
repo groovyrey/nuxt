@@ -11,7 +11,7 @@
 
       <div class="setup-content">
         <div v-if="error" class="error-state">
-          <AlertCircleIcon :size="48" color="#ff4444" />
+          <AlertCircleIcon :size="48" color="var(--error-red)" />
           <h3>SETUP ERROR</h3>
           <p>{{ error }}</p>
           <button @click="goBack" class="btn-primary">RETURN TO APPLICATION</button>
@@ -227,7 +227,7 @@ const goBack = () => {
 
 .error-state h3 {
   margin: 0;
-  color: #ff4444;
+  color: var(--error-red);
 }
 
 .scanner-section {

@@ -283,9 +283,9 @@ watch(() => route.path, () => {
 }
 
 .mobile-logout-btn {
-  background: rgba(255, 68, 68, 0.1);
-  border: 1px solid rgba(255, 68, 68, 0.2);
-  color: #ff4444;
+  background: rgba(var(--error-red-rgb), 0.1);
+  border: 1px solid rgba(var(--error-red-rgb), 0.2);
+  color: var(--error-red);
   padding: 0.8rem;
   border-radius: 8px;
   font-weight: 800;

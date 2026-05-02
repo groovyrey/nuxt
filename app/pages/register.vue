@@ -605,9 +605,9 @@ input:focus, select:focus {
 }
 
 .error-msg {
-  color: #ff4444;
+  color: var(--error-red);
   font-size: 0.75rem;
-  background: rgba(255, 68, 68, 0.08);
+  background: rgba(var(--error-red-rgb), 0.08);
   padding: 1rem;
   border-radius: 10px;
   display: flex;
@@ -649,25 +649,25 @@ input:focus, select:focus {
 .error-icon {
   position: absolute;
   right: 12px;
-  color: #ff4444;
+  color: var(--error-red);
   animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
 }
 
 .field-error {
   font-size: 0.6rem;
-  color: #ff4444;
+  color: var(--error-red);
   font-weight: 600;
   margin-top: 4px;
 }
 
 .form-group.has-error input {
-  border-color: rgba(255, 68, 68, 0.5);
-  background: rgba(255, 68, 68, 0.02);
+  border-color: rgba(var(--error-red-rgb), 0.5);
+  background: rgba(var(--error-red-rgb), 0.02);
 }
 
 .form-group.has-error input:focus {
-  border-color: #ff4444;
-  box-shadow: 0 0 10px rgba(255, 68, 68, 0.1);
+  border-color: var(--error-red);
+  box-shadow: 0 0 10px rgba(var(--error-red-rgb), 0.1);
 }
 
 .fade-in-enter-active {
@@ -693,4 +693,4 @@ input:focus, select:focus {
     background: transparent;
   }
 }
-</style>tyle>le>
+</style>

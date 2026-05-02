@@ -411,10 +411,10 @@ input:focus {
 }
 
 .error-msg {
-  color: #ff4444;
+  color: var(--error-red);
   font-size: 0.75rem;
   text-align: center;
-  background: rgba(255, 68, 68, 0.08);
+  background: rgba(var(--error-red-rgb), 0.08);
   padding: 0.75rem;
   border-radius: 8px;
   display: flex;

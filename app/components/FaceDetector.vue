@@ -147,7 +147,7 @@ const handleVideoPlay = () => {
         // Draw landmarks for "pro" look
         const resizedDetection = faceapi.resizeResults(detection, displaySize!);
         if (ctx) {
-          ctx.fillStyle = 'rgba(0, 255, 136, 0.5)';
+          ctx.fillStyle = 'rgba(var(--accent-green-rgb), 0.5)';
           resizedDetection.landmarks.positions.forEach(p => {
             ctx.beginPath();
             ctx.arc(p.x, p.y, 1, 0, 2 * Math.PI);
@@ -381,7 +381,7 @@ onUnmounted(() => stopCamera());
   font-weight: 800;
   letter-spacing: 0.2em;
   color: var(--accent-green);
-  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+  text-shadow: 0 0 10px rgba(var(--accent-green-rgb), 0.5);
 }
 
 .detection-status {
@@ -408,22 +408,22 @@ onUnmounted(() => stopCamera());
 }
 
 .status-badge.warning {
-  background: rgba(255, 68, 68, 0.2);
-  color: #ff4444;
-  border: 1px solid rgba(255, 68, 68, 0.3);
+  background: rgba(var(--error-red-rgb), 0.2);
+  color: var(--error-red);
+  border: 1px solid rgba(var(--error-red-rgb), 0.3);
 }
 
 .status-badge.info {
-  background: rgba(0, 255, 136, 0.1);
+  background: rgba(var(--accent-green-rgb), 0.1);
   color: var(--accent-green);
-  border: 1px solid rgba(0, 255, 136, 0.2);
+  border: 1px solid rgba(var(--accent-green-rgb), 0.2);
 }
 
 .status-badge.success {
-  background: rgba(0, 255, 136, 0.2);
+  background: rgba(var(--accent-green-rgb), 0.2);
   color: var(--accent-green);
   border: 1px solid var(--accent-green);
-  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+  box-shadow: 0 0 15px rgba(var(--accent-green-rgb), 0.3);
 }
 
 @keyframes fadeIn {

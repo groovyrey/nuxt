@@ -23,6 +23,8 @@ onMounted(() => {
   --bg-card: #0c0c0c;
   --accent-green: #00ff88;
   --accent-green-rgb: 0, 255, 136;
+  --error-red: #ff4444;
+  --error-red-rgb: 255, 68, 68;
   --text-dim: #888;
   --glass: rgba(255, 255, 255, 0.03);
   --text-main: #ffffff;
@@ -101,11 +103,11 @@ onMounted(() => {
 
 /* Error State */
 [data-sonner-toast][data-type='error'] {
-  border-bottom: 2px solid #ff4444 !important;
+  border-bottom: 2px solid var(--error-red) !important;
 }
 
 [data-sonner-toast][data-type='error'] [data-icon] {
-  color: #ff4444 !important;
+  color: var(--error-red) !important;
 }
 
 /* Theme specific overrides */
