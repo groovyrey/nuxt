@@ -14,7 +14,7 @@ export const comparePassword = async (password: string, hash: string) => {
 export const createSession = async (event: any, username: string) => {
   const db = useDb();
   const sessionId = uuidv4();
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(); // 7 days
   
   await db.execute(
     'INSERT INTO sessions (id, username, expires_at) VALUES (?, ?, ?)',
@@ -23,7 +23,7 @@ export const createSession = async (event: any, username: string) => {
 
   // Update last login
   await db.execute(
-    'UPDATE users SET last_login_at = NOW() WHERE username = ?',
+    'UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE username = ?',
     [username]
   );
 
@@ -40,7 +40,7 @@ export const createSession = async (event: any, username: string) => {
 export const getAuthSession = async (sessionId: string) => {
   const db = useDb();
   const [rows] = await db.execute(
-    'SELECT s.*, u.email, u.gender, u.age FROM sessions s JOIN users u ON s.username = u.username WHERE s.id = ? AND s.expires_at > NOW()',
+    'SELECT s.*, u.email, u.gender, u.age FROM sessions s JOIN users u ON s.username = u.username WHERE s.id = ? AND datetime(s.expires_at) > datetime(\'now\')',
     [sessionId]
   );
   
@@ -167,7 +167,7 @@ export const findMatchingUserByFace = async (faceDescriptor: number[] | number[]
     const milvusResult = await searchFaceVector(developerId, queryVector, threshold);
     
     if (milvusResult) {
-      // If we found a candidate via Milvus, fetch their full data from MySQL to verify/return
+      // If we found a candidate via Milvus, fetch their full data from Turso to verify/return
       const [rows] = await db.execute(
         'SELECT email as username, face_descriptor FROM external_users WHERE developer_id = ? AND email = ?',
         [developerId, milvusResult.email]
@@ -180,7 +180,7 @@ export const findMatchingUserByFace = async (faceDescriptor: number[] | number[]
     }
   }
 
-  // 2. Fallback to Legacy MySQL Search
+  // 2. Fallback to Legacy SQLite Search
   let query: string;
   let params: any[] = [];
   

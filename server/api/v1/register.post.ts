@@ -44,10 +44,10 @@ export default defineEventHandler(async (event) => {
     let descriptorToStore = JSON.stringify(faceDescriptor);
     descriptorToStore = encryptBiometrics(descriptorToStore);
     
-    // Use ON DUPLICATE KEY UPDATE to allow re-registering faces for the same email
+    // Use ON CONFLICT to allow re-registering faces for the same email
     await db.execute(
-      'INSERT INTO external_users (developer_id, email, face_descriptor) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE face_descriptor = ?',
-      [devUserId, email, descriptorToStore, descriptorToStore]
+      'INSERT INTO external_users (developer_id, email, face_descriptor) VALUES (?, ?, ?) ON CONFLICT(developer_id, email) DO UPDATE SET face_descriptor = excluded.face_descriptor',
+      [devUserId, email, descriptorToStore]
     );
 
     // Sync to Milvus

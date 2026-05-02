@@ -57,7 +57,7 @@ export const upsertFaceVector = async (developerId: string, email: string, vecto
 
   try {
     // Delete existing if any (Milvus doesn't have unique VarChar constraint on non-PK fields)
-    // In a real app, you might store the Milvus internal ID in MySQL for direct deletion
+    // In a real app, you might store the Milvus internal ID in Turso for direct deletion
     await client.delete({
       collection_name: COLLECTION_NAME,
       filter: `developer_id == "${developerId}" and email == "${email}"`

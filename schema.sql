@@ -3,8 +3,8 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     gender VARCHAR(50),
-    age INT,
-    face_descriptor JSON,
+    age INTEGER,
+    face_descriptor TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login_at TIMESTAMP NULL
 );
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS api_keys (
     key_hash VARCHAR(255) NOT NULL,
     key_prefix VARCHAR(50) NOT NULL,
     name VARCHAR(255) NOT NULL,
-    threshold FLOAT DEFAULT 0.45,
+    threshold REAL DEFAULT 0.45,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_used_at TIMESTAMP NULL,
     FOREIGN KEY (user_id) REFERENCES users(username) ON DELETE CASCADE
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS api_keys (
 CREATE TABLE IF NOT EXISTS external_users (
     developer_id VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
-    face_descriptor JSON,
+    face_descriptor TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_seen_at TIMESTAMP NULL,
     PRIMARY KEY (developer_id, email),
@@ -42,26 +42,26 @@ CREATE TABLE IF NOT EXISTS webhooks (
     id VARCHAR(255) PRIMARY KEY,
     user_id VARCHAR(255) NOT NULL,
     url VARCHAR(2000) NOT NULL,
-    events JSON NOT NULL,
+    events TEXT NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(username) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS api_usage (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     api_key_id VARCHAR(255) NOT NULL,
     endpoint VARCHAR(255) NOT NULL,
-    status_code INT NOT NULL,
+    status_code INTEGER NOT NULL,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (api_key_id) REFERENCES api_keys(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS audit_logs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id VARCHAR(255) NOT NULL,
     action VARCHAR(255) NOT NULL,
-    details JSON,
+    details TEXT,
     ip_address VARCHAR(45),
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(username) ON DELETE CASCADE

@@ -34,7 +34,7 @@ export const validateApiKey = async (apiKey: string) => {
     if (isValid) {
       // Update last used at
       await db.execute(
-        'UPDATE api_keys SET last_used_at = NOW() WHERE id = ?',
+        'UPDATE api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = ?',
         [key.id]
       );
       return key;
@@ -47,7 +47,7 @@ export const validateApiKey = async (apiKey: string) => {
 export const updateExternalUserActivity = async (developerId: string, email: string) => {
   const db = useDb();
   await db.execute(
-    'UPDATE external_users SET last_seen_at = NOW() WHERE developer_id = ? AND email = ?',
+    'UPDATE external_users SET last_seen_at = CURRENT_TIMESTAMP WHERE developer_id = ? AND email = ?',
     [developerId, email]
   );
 };

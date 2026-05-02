@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
     return {
       status: 'error',
       message: error.message,
-      hint: 'Ensure your environment variables match your Aiven console credentials.'
+      hint: 'Ensure your environment variables match your Turso credentials.'
     };
   }
 });

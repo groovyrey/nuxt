@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
       k.name as key_name
     FROM api_usage u
     JOIN api_keys k ON u.api_key_id = k.id
-    WHERE k.user_id = ? AND u.timestamp > DATE_SUB(NOW(), INTERVAL 7 DAY)
+    WHERE k.user_id = ? AND u.timestamp > datetime('now', '-7 days')
     GROUP BY DATE(u.timestamp), k.id
     ORDER BY date ASC
   `, [session.username]);
