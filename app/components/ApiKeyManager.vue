@@ -183,7 +183,11 @@ const creatingWebhook = ref(false);
 const fetchKeys = async () => {
   loading.value = true;
   try {
-    keys.value = await $fetch('/api/keys');
+    const data = await $fetch('/api/keys');
+    keys.value = data.map(k => ({
+      ...k,
+      threshold: k.threshold ? Math.round(parseFloat(k.threshold) * 100) / 100 : 0.45
+    }));
   } catch (err) {
     toast.error('Failed to load API keys');
   } finally {
