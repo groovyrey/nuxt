@@ -27,13 +27,7 @@
           All API requests must include your unique API key in the <code>X-API-Key</code> header. 
           For Hosted UI redirects, use the <code>api_key</code> query parameter.
         </p>
-        <div class="code-box">
-<pre><code class="language-http"># REST API Header
-X-API-Key: lf_live_xxxxxxxxxxxxxxxx
-
-# Hosted UI Parameter
-?api_key=lf_live_xxxxxxxxxxxxxxxx</code></pre>
-        </div>
+        <div class="code-box" v-html="authCodeHtml" />
       </section>
 
       <!-- Hosted UI Section -->
@@ -103,24 +97,11 @@ X-API-Key: lf_live_xxxxxxxxxxxxxxxx
           <div class="code-grid">
             <div class="code-group">
               <label>REQUEST BODY</label>
-              <div class="code-box small">
-<pre><code class="language-json">{
-  "faceDescriptor": [0.1, -0.2, ...],
-  "email": "optional@limit.to"
-}</code></pre>
-              </div>
+              <div class="code-box small" v-html="requestBodyHtml" />
             </div>
             <div class="code-group">
               <label>RESPONSE (200)</label>
-              <div class="code-box small">
-<pre><code class="language-json">{
-  "identified": true,
-  "user": {
-    "email": "user@domain.com",
-    "distance": 0.32
-  }
-}</code></pre>
-              </div>
+              <div class="code-box small" v-html="responseBodyHtml" />
             </div>
           </div>
         </div>
@@ -184,12 +165,14 @@ import {
   Lock as LockIcon,
   Webhook as WebhookIcon
 } from 'lucide-vue-next';
-import hljs from 'highlight.js';
-import 'highlight.js/styles/tokyo-night-dark.css';
 
-onMounted(() => {
-  hljs.highlightAll();
+const { data: highlightedSnippets } = await useFetch('/api/docs-highlights', {
+  key: 'docs-highlights',
 });
+
+const authCodeHtml = computed(() => highlightedSnippets.value?.auth ?? '');
+const requestBodyHtml = computed(() => highlightedSnippets.value?.requestBody ?? '');
+const responseBodyHtml = computed(() => highlightedSnippets.value?.responseBody ?? '');
 </script>
 
 <style scoped>
@@ -339,16 +322,17 @@ code {
 
 .code-box.small { padding: 0; }
 
-.code-box pre {
+.code-box :deep(pre.shiki) {
   margin: 0;
   padding: 1.25rem;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.85rem;
   line-height: 1.6;
   background: transparent !important;
+  overflow-x: auto;
 }
 
-.code-box code {
+.code-box :deep(code) {
   background: transparent !important;
   padding: 0 !important;
   color: inherit !important;
@@ -436,5 +420,3 @@ td code { color: var(--text-main); }
   .sticky-nav { top: 50px; }
 }
 </style>
-
-

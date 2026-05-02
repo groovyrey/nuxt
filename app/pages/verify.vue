@@ -314,25 +314,3 @@ const goBack = () => {
   to { transform: rotate(360deg); }
 }
 </style>
- background: var(--accent-green);
-  color: var(--bg-black);
-  border: none;
-  padding: 0.8rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.spin { animation: spin 1s linear infinite; }
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-</style>
-inter;
-}
-
-.spin { animation: spin 1s linear infinite; }
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-</style>
