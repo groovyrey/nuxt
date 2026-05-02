@@ -3,14 +3,13 @@
     <Navbar v-if="showNavbar" />
     <slot />
     
-    <footer v-if="showNavbar" class="system-footer">
-      <div class="max-width-container">
-        <div class="footer-line"></div>
+    <footer v-if="showNavbar" class="app-footer">
+      <div class="app-container">
         <div class="footer-content">
-          <p>&copy; 2024 LUFACE SYSTEM • SECURE ACCESS ONLY</p>
-          <div class="footer-icons">
-            <GithubIcon :size="16" />
-            <TwitterIcon :size="16" />
+          <p>&copy; 2024 LUFACE • SECURE ACCESS</p>
+          <div class="footer-links">
+            <GithubIcon :size="14" />
+            <TwitterIcon :size="14" />
           </div>
         </div>
       </div>
@@ -28,52 +27,35 @@ const showNavbar = computed(() => !standaloneRoutes.includes(route.path));
 <style scoped>
 .layout-wrapper {
   min-height: 100vh;
-  background-color: var(--bg-app);
-  color: var(--text-main);
-  transition: background-color 0.3s ease, color 0.3s ease;
   display: flex;
   flex-direction: column;
 }
 
-.max-width-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-  padding: 0 1.5rem;
-  box-sizing: border-box;
-}
-
-.system-footer {
+.app-footer {
   margin-top: auto;
-  padding: 3rem 0 1.5rem;
-}
-
-.footer-line {
-  height: 1px;
-  background: linear-gradient(90deg, var(--accent-green), transparent);
-  margin-bottom: 1.5rem;
-  opacity: 0.2;
+  padding: 4rem 0 2rem;
+  border-top: 1px solid var(--border-dim);
 }
 
 .footer-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
   gap: 1rem;
 }
 
-.system-footer p {
+.app-footer p {
   color: var(--text-dim);
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
   margin: 0;
 }
 
-.footer-icons {
+.footer-links {
   display: flex;
-  gap: 1rem;
+  gap: 1.25rem;
   color: var(--text-dim);
 }
 </style>
+

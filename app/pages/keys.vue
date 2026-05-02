@@ -1,29 +1,23 @@
 <template>
-  <div v-if="user" class="min-h-screen app-container">
-    <div class="page-title-area">
-      <div class="title-with-back">
+  <div v-if="user" class="app-container">
+    <header class="page-header">
+      <div class="header-main">
         <NuxtLink to="/" class="back-link">
           <ChevronLeftIcon :size="20" />
         </NuxtLink>
-        <h2>API <span class="accent">MANAGEMENT</span></h2>
+        <h1>API <span class="accent">MANAGEMENT</span></h1>
       </div>
-      <p class="subtitle">Configure your access keys, monitoring, and webhooks.</p>
-    </div>
+      <p class="subtitle">Configure keys, monitoring, and webhooks.</p>
+    </header>
 
-    <main class="keys-layout">
-      <div class="manager-wrapper">
-        <ApiKeyManager />
-      </div>
+    <main class="manager-card">
+      <ApiKeyManager />
     </main>
   </div>
 </template>
 
 <script setup>
-import { 
-  User as UserIcon,
-  ChevronLeft as ChevronLeftIcon
-} from 'lucide-vue-next';
-
+import { ChevronLeft as ChevronLeftIcon } from 'lucide-vue-next';
 const { user, isLoading } = useAuth();
 
 watch(isLoading, (loading) => {
@@ -35,24 +29,20 @@ watch(isLoading, (loading) => {
 
 <style scoped>
 .app-container {
-  display: flex;
-  flex-direction: column;
-  padding: 1.5rem;
-  max-width: 1200px;
+  padding: 2rem 1.5rem;
+  max-width: 1100px;
   margin: 0 auto;
-  min-height: 100vh;
+  width: 100%;
 }
 
-.page-title-area {
-  margin-bottom: 2.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-dim);
+.page-header {
+  margin-bottom: 3rem;
 }
 
-.title-with-back {
+.header-main {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 1.25rem;
   margin-bottom: 0.5rem;
 }
 
@@ -60,11 +50,11 @@ watch(isLoading, (loading) => {
   color: var(--text-dim);
   display: flex;
   align-items: center;
-  transition: color 0.2s;
   background: var(--glass);
-  padding: 6px;
-  border-radius: 8px;
+  padding: 8px;
+  border-radius: 10px;
   border: 1px solid var(--border-dim);
+  transition: all 0.2s;
 }
 
 .back-link:hover {
@@ -73,50 +63,31 @@ watch(isLoading, (loading) => {
   background: rgba(var(--accent-green-rgb), 0.05);
 }
 
-.page-title-area h2 {
-  font-size: 1.5rem;
-  font-weight: 800;
+.page-header h1 {
+  font-size: 1.75rem;
+  font-weight: 900;
   margin: 0;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
   color: var(--text-dim);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   margin: 0;
 }
 
-.keys-layout {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.manager-wrapper {
-  background: var(--card-black);
+.manager-card {
+  background: var(--bg-card);
   border: 1px solid var(--border-dim);
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 10px 30px var(--shadow-color);
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 24px var(--shadow-color);
 }
 
 @media (max-width: 600px) {
-  .app-container {
-    padding: 1rem;
-  }
-  
-  .manager-wrapper {
-    padding: 1.25rem;
-    border-radius: 12px;
-  }
-
-  .page-title-area {
-    margin-bottom: 1.5rem;
-  }
-
-  .page-title-area h2 {
-    font-size: 1.25rem;
-  }
+  .app-container { padding: 1.5rem 1rem; }
+  .page-header h1 { font-size: 1.5rem; }
+  .manager-card { padding: 1.5rem; border-radius: 12px; }
 }
 </style>
+

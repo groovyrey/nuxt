@@ -1,123 +1,102 @@
 <template>
-  <div v-if="user" class="min-h-screen app-container">
-    <div class="page-title-area">
-      <div class="title-with-status">
-        <div class="status-dot" :class="{ 'active': isOnline }"></div>
-        <h2>OPERATOR <span class="accent">DASHBOARD</span></h2>
+  <div v-if="user" class="app-container">
+    <header class="page-header">
+      <div class="header-main">
+        <div class="status-indicator">
+          <div class="status-dot" :class="{ 'active': isOnline }"></div>
+          <span class="status-text">{{ isOnline ? 'SYSTEM ACTIVE' : 'SYSTEM OFFLINE' }}</span>
+        </div>
+        <h1>OPERATOR <span class="accent">DASHBOARD</span></h1>
       </div>
-      <p class="subtitle">Secure biometric interface • System operational</p>
-    </div>
+      <p class="subtitle">Secure biometric interface • {{ user.username.toUpperCase() }}</p>
+    </header>
     
-    <main class="content-grid">
-      <div class="luface-card">
-        <div class="user-profile-display">
+    <main class="dashboard-grid">
+      <section class="main-card">
+        <div class="profile-summary">
           <div class="profile-header">
-            <div class="avatar-placeholder">
+            <div class="avatar-box">
               <span class="initials">{{ user.username.charAt(0).toUpperCase() }}</span>
-              <div class="avatar-overlay">
-                <ShieldCheckIcon :size="32" color="black" />
-              </div>
+              <ShieldCheckIcon class="shield-overlay" :size="24" />
             </div>
             <div class="profile-info">
               <h2>{{ user.username }}</h2>
-              <p class="email">
-                <MailIcon :size="12" class="inline-icon" />
-                {{ user.email }}
-              </p>
+              <p class="email">{{ user.email }}</p>
             </div>
           </div>
           
-          <div class="profile-details">
-            <div class="detail-item">
-              <label><FingerprintIcon :size="10" /> BIO-METRIC ID</label>
-              <span>{{ user.username.toUpperCase() }}-NX-{{ Math.floor(Math.random() * 10000) }}</span>
+          <div class="profile-stats">
+            <div class="stat-box">
+              <label><FingerprintIcon :size="12" /> BIO-ID</label>
+              <span class="value">{{ user.username.toUpperCase() }}-NX</span>
             </div>
-            <div class="detail-item">
-              <label><CalendarIcon :size="10" /> AGE</label>
-              <span>{{ user.age || 'NOT RECORDED' }} YEARS</span>
+            <div class="stat-box">
+              <label><CalendarIcon :size="12" /> AGE</label>
+              <span class="value">{{ user.age || '—' }}</span>
             </div>
-            <div class="detail-item">
-              <label><UserIcon :size="10" /> GENDER</label>
-              <span>{{ user.gender?.toUpperCase() || 'NOT RECORDED' }}</span>
+            <div class="stat-box">
+              <label><UserIcon :size="12" /> GENDER</label>
+              <span class="value">{{ user.gender?.toUpperCase() || '—' }}</span>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div class="info-sidebar">
-        <div class="status-item highlight">
-          <label><LockIcon :size="10" /> ACCESS STATUS</label>
-          <span class="value">AUTHORIZED</span>
+      <aside class="sidebar-info">
+        <div class="info-card highlight">
+          <label><LockIcon :size="12" /> STATUS</label>
+          <span class="status-badge">AUTHORIZED</span>
         </div>
         
-        <div class="status-item">
-          <label><ActivityIcon :size="10" /> SYSTEM STATUS</label>
+        <div class="info-card">
+          <label><ActivityIcon :size="12" /> SYSTEM</label>
           <span class="value">OPERATIONAL</span>
         </div>
 
-        <div class="status-item">
-          <label><CpuIcon :size="10" /> NETWORK</label>
-          <span class="value">ENCRYPTED GRID</span>
-        </div>
-
-        <!-- API Key Management Shortcut -->
-        <div class="status-item api-shortcut">
-          <label><KeyIcon :size="10" /> DEVELOPER ACCESS</label>
-          <p class="shortcut-desc">Manage API keys, webhooks and view usage logs.</p>
-          <NuxtLink to="/keys" class="manage-link">
-            GO TO API MANAGER
-            <ArrowRightIcon :size="14" />
+        <div class="info-card api-card">
+          <div class="card-content">
+            <label><KeyIcon :size="12" /> API ACCESS</label>
+            <p>Manage keys and webhooks.</p>
+          </div>
+          <NuxtLink to="/keys" class="action-btn">
+            MANAGE <ArrowRightIcon :size="14" />
           </NuxtLink>
         </div>
 
-        <!-- Danger Zone -->
-        <div class="status-item danger-zone">
-          <label><Trash2Icon :size="10" /> DANGER ZONE</label>
+        <div class="info-card danger-card">
+          <label><Trash2Icon :size="12" /> DANGER ZONE</label>
           <div v-if="!confirmDeletion">
-            <button @click="confirmDeletion = true" class="delete-btn-trigger">
-              DELETE PROFILE
-            </button>
+            <button @click="confirmDeletion = true" class="text-btn">DELETE PROFILE</button>
           </div>
-          <div v-else class="confirmation-box">
-            <p>IRREVERSIBLE ACTION</p>
-            <div class="confirm-actions">
-              <button @click="handleDeleteAccount" class="delete-btn-confirm" :disabled="deleting">
-                {{ deleting ? 'DELETING...' : 'CONFIRM' }}
-              </button>
-              <button @click="confirmDeletion = false" class="delete-btn-cancel" :disabled="deleting">
-                CANCEL
-              </button>
-            </div>
+          <div v-else class="confirm-group">
+            <button @click="handleDeleteAccount" class="confirm-btn" :disabled="deleting">
+              {{ deleting ? '...' : 'CONFIRM' }}
+            </button>
+            <button @click="confirmDeletion = false" class="cancel-btn" :disabled="deleting">CANCEL</button>
           </div>
         </div>
-      </div>
+      </aside>
     </main>
   </div>
-  <div v-else-if="!isLoading" class="redirecting">
-    <div class="spinner"></div>
-    <span>Redirecting to login...</span>
+  <div v-else-if="!isLoading" class="loading-overlay">
+    <div class="loader"></div>
   </div>
 </template>
 
 <script setup>
 import { 
   User as UserIcon, 
-  Mail as MailIcon, 
   ShieldCheck as ShieldCheckIcon,
   Fingerprint as FingerprintIcon,
   Calendar as CalendarIcon,
   Lock as LockIcon,
   Activity as ActivityIcon,
-  Cpu as CpuIcon,
-  Github as GithubIcon,
-  Twitter as TwitterIcon,
   Trash2 as Trash2Icon,
-  LogOut as LogOutIcon,
   Key as KeyIcon,
   ArrowRight as ArrowRightIcon
 } from 'lucide-vue-next';
 
-const { user, isLoading, logout } = useAuth();
+const { user, isLoading } = useAuth();
 const isOnline = ref(true)
 const confirmDeletion = ref(false)
 const deleting = ref(false)
@@ -130,7 +109,6 @@ const handleDeleteAccount = async () => {
     navigateTo('/login');
   } catch (e) {
     console.error('Failed to delete account:', e);
-    alert('Failed to delete account. Please try again.');
     deleting.value = false;
     confirmDeletion.value = false;
   }
@@ -145,256 +123,308 @@ watch(isLoading, (loading) => {
 
 <style scoped>
 .app-container {
-  display: flex;
-  flex-direction: column;
-  padding: 1.5rem;
-  max-width: 1200px;
+  padding: 2rem 1.5rem;
+  max-width: 1100px;
   margin: 0 auto;
-  min-height: 100vh;
+  width: 100%;
 }
 
-.page-title-area {
-  margin-bottom: 2.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-dim);
+.page-header {
+  margin-bottom: 3rem;
 }
 
-.title-with-status {
+.header-main {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 1.5rem;
   margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--glass);
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border-dim);
 }
 
 .status-dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   background: var(--text-dim);
   border-radius: 50%;
-  flex-shrink: 0;
 }
 
 .status-dot.active {
   background: var(--accent-green);
-  box-shadow: 0 0 15px var(--accent-green);
+  box-shadow: 0 0 10px var(--accent-green);
 }
 
-.page-title-area h2 {
-  font-size: 1.5rem;
+.status-text {
+  font-size: 0.6rem;
   font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.page-header h1 {
+  font-size: 1.75rem;
+  font-weight: 900;
   margin: 0;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
   color: var(--text-dim);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   margin: 0;
 }
 
-.user-profile-display {
-  width: 100%;
-}
-
-.content-grid {
+.dashboard-grid {
   display: grid;
-  grid-template-columns: 1fr 280px;
+  grid-template-columns: 1fr 300px;
+  gap: 2rem;
+}
+
+.main-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 24px var(--shadow-color);
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
   gap: 1.5rem;
-  flex: 1;
+  margin-bottom: 3rem;
 }
 
-.luface-card {
-  background: var(--card-black);
-  border: 1px solid var(--border-dim);
-  border-radius: 20px;
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  min-height: 400px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 10px 30px var(--shadow-color);
-}
-
-.info-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.status-item {
-  background: var(--card-black);
-  border: 1px solid var(--border-dim);
-  padding: 1rem;
+.avatar-box {
+  width: 80px;
+  height: 80px;
+  background: var(--accent-green);
   border-radius: 12px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px var(--shadow-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
-.status-item.highlight {
+.initials {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #000;
+}
+
+.shield-overlay {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  background: var(--bg-card);
+  padding: 4px;
+  border-radius: 8px;
+  color: var(--accent-green);
+  border: 1px solid var(--border-dim);
+}
+
+.profile-info h2 {
+  font-size: 1.5rem;
+  margin: 0 0 4px;
+}
+
+.profile-info .email {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-box label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+}
+
+.stat-box .value {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.sidebar-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.info-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  padding: 1.25rem;
+  border-radius: 12px;
+}
+
+.info-card.highlight {
   border-color: var(--accent-green);
   background: rgba(var(--accent-green-rgb), 0.02);
 }
 
-.status-item label {
+.info-card label {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 0.6rem;
+  font-weight: 800;
   color: var(--text-dim);
-  margin-bottom: 4px;
-  font-weight: 600;
+  margin-bottom: 8px;
 }
 
-.status-item .value {
-  font-family: monospace;
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: var(--accent-green);
+}
+
+.info-card .value {
   font-size: 0.85rem;
-  color: var(--text-main);
+  font-weight: 700;
 }
 
-.status-item.api-shortcut {
+.api-card {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
 }
 
-.shortcut-desc {
-  font-size: 0.7rem;
+.api-card p {
+  font-size: 0.75rem;
   color: var(--text-dim);
   margin: 0;
-  line-height: 1.4;
 }
 
-.manage-link {
-  margin-top: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.action-btn {
   background: var(--glass);
-  border: 1px solid var(--border-color);
-  color: var(--accent-green);
-  padding: 0.6rem 0.8rem;
-  border-radius: 8px;
+  border: 1px solid var(--border-dim);
+  color: var(--text-main);
+  text-decoration: none;
   font-size: 0.65rem;
   font-weight: 800;
-  text-decoration: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
   transition: all 0.2s;
 }
 
-.manage-link:hover {
-  background: var(--border-color);
-  transform: translateX(4px);
+.action-btn:hover {
+  background: var(--border-dim);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
 }
 
-.danger-zone {
-  border-color: rgba(var(--error-red-rgb), 0.2);
+.danger-card {
   margin-top: auto;
+  border-color: rgba(var(--error-red-rgb), 0.2);
 }
 
-.delete-btn-trigger {
-  width: 100%;
+.text-btn {
   background: transparent;
-  border: 1px solid rgba(var(--error-red-rgb), 0.3);
+  border: none;
   color: var(--error-red);
-  padding: 0.6rem;
-  border-radius: 8px;
   font-size: 0.65rem;
   font-weight: 800;
   cursor: pointer;
-  transition: all 0.3s;
+  padding: 0;
+  opacity: 0.7;
 }
 
-.delete-btn-trigger:hover {
-  background: rgba(var(--error-red-rgb), 0.1);
-  border-color: var(--error-red);
-}
+.text-btn:hover { opacity: 1; }
 
-.confirmation-box {
-  text-align: center;
-}
-
-.confirmation-box p {
-  color: var(--error-red);
-  font-size: 0.6rem;
-  font-weight: 900;
-  margin: 0.5rem 0;
-  letter-spacing: 0.1em;
-}
-
-.confirm-actions {
+.confirm-group {
   display: flex;
   gap: 8px;
-  margin-top: 8px;
 }
 
-.delete-btn-confirm {
+.confirm-btn {
   flex: 1;
   background: var(--error-red);
   color: #000;
   border: none;
-  padding: 0.5rem;
-  border-radius: 6px;
+  padding: 0.4rem;
+  border-radius: 4px;
   font-size: 0.6rem;
-  font-weight: 800;
+  font-weight: 900;
   cursor: pointer;
 }
 
-.delete-btn-cancel {
+.cancel-btn {
   flex: 1;
   background: var(--glass);
   color: var(--text-main);
-  border: 1px solid var(--border-color);
-  padding: 0.5rem;
-  border-radius: 6px;
+  border: 1px solid var(--border-dim);
+  padding: 0.4rem;
+  border-radius: 4px;
   font-size: 0.6rem;
-  font-weight: 800;
+  font-weight: 900;
   cursor: pointer;
 }
 
-.spinner {
+.loading-overlay {
+  height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader {
   width: 24px;
   height: 24px;
-  border: 2px solid var(--border-color);
+  border: 2px solid var(--border-dim);
   border-top-color: var(--accent-green);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.redirecting {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  height: 100vh;
-  color: var(--text-dim);
-  font-size: 0.8rem;
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 900px) {
-  .content-grid { grid-template-columns: 1fr; }
-  .info-sidebar { 
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .sidebar-info {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   }
+  .danger-card { margin-top: 0; }
 }
 
 @media (max-width: 600px) {
-  .app-container { padding: 1rem; }
-  .profile-header {
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-  }
-  .profile-info .email { justify-content: center; }
-  .logo-area h1 { font-size: 1.1rem; }
-  .user-controls { width: 100%; justify-content: space-between; }
-  .luface-card { padding: 1.5rem; }
-  .profile-details { grid-template-columns: 1fr; }
+  .app-container { padding: 1.5rem 1rem; }
+  .page-header h1 { font-size: 1.5rem; }
+  .main-card { padding: 1.5rem; }
+  .profile-header { margin-bottom: 2rem; }
+  .avatar-box { width: 64px; height: 64px; }
+  .initials { font-size: 1.5rem; }
+  .sidebar-info { grid-template-columns: 1fr; }
 }
 </style>
