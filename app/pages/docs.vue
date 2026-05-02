@@ -180,6 +180,7 @@ const responseBodyHtml = computed(() => highlightedSnippets.value?.responseBody 
   padding: 3rem 1.5rem;
   max-width: 900px;
   margin: 0 auto;
+  min-width: 0;
 }
 
 .page-header {
@@ -191,6 +192,7 @@ const responseBodyHtml = computed(() => highlightedSnippets.value?.responseBody 
   align-items: center;
   gap: 1.25rem;
   margin-bottom: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .header-main h1 {
@@ -233,6 +235,8 @@ const responseBodyHtml = computed(() => highlightedSnippets.value?.responseBody 
   gap: 2rem;
   overflow-x: auto;
   scrollbar-width: none;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .nav-links a {
@@ -250,6 +254,11 @@ const responseBodyHtml = computed(() => highlightedSnippets.value?.responseBody 
   display: flex;
   flex-direction: column;
   gap: 5rem;
+  min-width: 0;
+}
+
+section {
+  min-width: 0;
 }
 
 section h2 {
@@ -292,6 +301,7 @@ code {
   border-radius: 16px;
   border: 1px solid var(--border-dim);
   margin-bottom: 2.5rem;
+  min-width: 0;
 }
 
 .endpoint-header {
@@ -299,12 +309,14 @@ code {
   align-items: center;
   gap: 12px;
   margin: 1.5rem 0;
+  min-width: 0;
 }
 
 .endpoint-header code {
   font-weight: 800;
   font-size: 1.1rem;
   color: var(--text-main);
+  overflow-wrap: anywhere;
 }
 
 .desc {
@@ -316,8 +328,12 @@ code {
   background: #000;
   border: 1px solid var(--border-dim);
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   margin: 1.5rem 0;
+  max-width: 100%;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 .code-box.small { padding: 0; }
@@ -329,7 +345,9 @@ code {
   font-size: 0.85rem;
   line-height: 1.6;
   background: transparent !important;
-  overflow-x: auto;
+  overflow: visible;
+  width: max-content;
+  min-width: 100%;
 }
 
 .code-box :deep(code) {
@@ -340,9 +358,14 @@ code {
 
 .code-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 1.5rem;
   margin-top: 1.5rem;
+  min-width: 0;
+}
+
+.code-group {
+  min-width: 0;
 }
 
 .code-group label {
@@ -357,12 +380,16 @@ code {
 .table-box {
   border: 1px solid var(--border-dim);
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   margin: 1.5rem 0;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 table {
   width: 100%;
+  min-width: 560px;
   border-collapse: collapse;
   font-size: 0.85rem;
 }
@@ -383,6 +410,17 @@ th {
 
 td { color: var(--text-dim); }
 td code { color: var(--text-main); }
+
+.example-box {
+  min-width: 0;
+}
+
+.example-box code {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 
 .docs-footer {
   margin-top: 4rem;
@@ -418,5 +456,7 @@ td code { color: var(--text-main); }
   .header-main h1 { font-size: 1.6rem; }
   .docs-content { gap: 4rem; }
   .sticky-nav { top: 50px; }
+  .endpoint-header { align-items: flex-start; }
+  table { min-width: 480px; }
 }
 </style>
