@@ -151,9 +151,9 @@ export function compareManyToMany(inputs: number[][], stored: number[][]) {
   }
   return minDistance;
 }
-
-import { searchFaceVector } from './milvus';
-
+export const EUCLIDEAN_THRESHOLD = 0.4; // Tightened from 0.45 for better security
+export const MAX_DESCRIPTORS = 12;
+... rest of code ...
 export const findMatchingUserByFace = async (faceDescriptor: number[] | number[][], targetIdentifier: string, developerId?: string, customThreshold?: number) => {
   const db = useDb();
   const threshold = customThreshold || EUCLIDEAN_THRESHOLD;
@@ -163,12 +163,29 @@ export const findMatchingUserByFace = async (faceDescriptor: number[] | number[]
 
   // 1. Try Milvus Vector Search if it's an external user search
   if (developerId) {
-    // We use the first descriptor (or average) for Milvus search
-    const queryVector = inputDescriptors[0];
-    const milvusResult = await searchFaceVector(developerId, queryVector, threshold);
-    
+    // Average descriptors for a more robust search vector
+    let queryVector: number[];
+    if (inputDescriptors.length > 1) {
+      const len = inputDescriptors[0].length;
+      queryVector = new Array(len).fill(0);
+      for (const d of inputDescriptors) {
+        for (let i = 0; i < len; i++) queryVector[i] += d[i];
+      }
+      queryVector = queryVector.map(v => v / inputDescriptors.length);
+    } else {
+      queryVector = inputDescriptors[0];
+    }
+
+    const milvusResult = await searchFaceVector(developerId, queryVector, threshold, targetIdentifier);
+
     if (milvusResult) {
-      // If we found a candidate via Milvus, fetch their full data from Turso to verify/return
+      // Double check that the match is for the requested user
+      if (targetIdentifier && milvusResult.email !== targetIdentifier) {
+        console.warn(`[SECURITY] Milvus returned unexpected user ${milvusResult.email} for target ${targetIdentifier}`);
+        return null;
+      }
+
+      // Fetch full data from Turso
       const [rows] = await db.execute(
         'SELECT email as username, face_descriptor FROM external_users WHERE developer_id = ? AND email = ?',
         [developerId, milvusResult.email]
@@ -180,6 +197,7 @@ export const findMatchingUserByFace = async (faceDescriptor: number[] | number[]
       }
     }
   }
+
 
   // 2. Fallback to Legacy SQLite Search
   let query: string;

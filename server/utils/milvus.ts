@@ -78,15 +78,19 @@ export const upsertFaceVector = async (developerId: string, email: string, vecto
   }
 };
 
-export const searchFaceVector = async (developerId: string, vector: number[], threshold: number) => {
+export const searchFaceVector = async (developerId: string, vector: number[], threshold: number, email?: string) => {
   const client = useMilvus();
   if (!client) return null;
 
   try {
+    const filter = email 
+      ? `developer_id == "${developerId}" and email == "${email}"`
+      : `developer_id == "${developerId}"`;
+
     const results = await client.search({
       collection_name: COLLECTION_NAME,
       vector: vector,
-      filter: `developer_id == "${developerId}"`,
+      filter: filter,
       limit: 1,
       params: { nprobe: 10 },
       output_fields: ['email']
@@ -95,11 +99,14 @@ export const searchFaceVector = async (developerId: string, vector: number[], th
     if (results.results.length > 0) {
       const topMatch = results.results[0];
       // Note: face-api.js euclidean distance vs Milvus L2
-      // We check if distance is within the threshold
-      if (topMatch.score < threshold) {
+      // Milvus L2 returns squared Euclidean distance.
+      // To match our EUCLIDEAN_THRESHOLD (0.45), we compare against threshold^2.
+      const squaredThreshold = threshold * threshold;
+      
+      if (topMatch.score < squaredThreshold) {
         return {
           email: topMatch.email as string,
-          distance: topMatch.score
+          distance: Math.sqrt(Number(topMatch.score)) // Return Euclidean for logging
         };
       }
     }
