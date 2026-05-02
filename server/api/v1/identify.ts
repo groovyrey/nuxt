@@ -23,8 +23,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const userId = keyRecord.user_id;
+  const query = getQuery(event);
   const body = await readBody(event);
-  const { faceDescriptor, email } = body;
+  const { faceDescriptor } = body;
+  const email = body.email || query.email;
 
   if (!faceDescriptor || !email) {
     await logApiUsage(keyRecord.id, url.pathname, 400);

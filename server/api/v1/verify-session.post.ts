@@ -3,8 +3,11 @@ import { findMatchingUserByFace } from '../../utils/auth';
 import { logApiUsage } from '../../utils/usage';
 
 export default defineEventHandler(async (event) => {
+  const query = getQuery(event);
   const body = await readBody(event);
-  const { apiKey, faceDescriptor, email } = body;
+  const { faceDescriptor } = body;
+  const apiKey = body.apiKey || query.apiKey || getHeader(event, 'X-API-Key');
+  const email = body.email || query.email;
   const url = getRequestURL(event);
 
   if (!apiKey) {

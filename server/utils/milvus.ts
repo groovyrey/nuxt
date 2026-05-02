@@ -7,9 +7,13 @@ const DIMENSION = 128; // face-api.js descriptors are 128-d
 
 export const useMilvus = () => {
   if (!milvusClient && process.env.MILVUS_ADDRESS) {
+    // Clean up address: remove protocol and ensure it's just host:port
+    const address = process.env.MILVUS_ADDRESS.replace(/^https?:\/\//, '');
+    
     milvusClient = new MilvusClient({
-      address: process.env.MILVUS_ADDRESS,
-      token: process.env.MILVUS_TOKEN
+      address: address,
+      token: process.env.MILVUS_TOKEN,
+      ssl: true // Required for Zilliz Cloud
     });
   }
   return milvusClient;
@@ -20,7 +24,10 @@ export const initMilvus = async () => {
   if (!client) return;
 
   try {
-    const hasCollection = await client.hasCollection({ collection_name: COLLECTION_NAME });
+    const hasCollection = await client.hasCollection({ 
+      collection_name: COLLECTION_NAME,
+      timeout: 5000 
+    });
     
     if (!hasCollection.value) {
       console.log(`Creating Milvus collection: ${COLLECTION_NAME}`);
@@ -31,7 +38,8 @@ export const initMilvus = async () => {
           { name: 'developer_id', data_type: DataType.VarChar, max_length: 255 },
           { name: 'email', data_type: DataType.VarChar, max_length: 255 },
           { name: 'vector', data_type: DataType.FloatVector, dim: DIMENSION }
-        ]
+        ],
+        timeout: 5000
       });
 
       // Create index for fast search
@@ -41,10 +49,14 @@ export const initMilvus = async () => {
         index_name: 'face_index',
         index_type: IndexType.HNSW,
         metric_type: MetricType.L2,
-        params: { M: 16, efConstruction: 64 }
+        params: { M: 16, efConstruction: 64 },
+        timeout: 5000
       });
 
-      await client.loadCollectionSync({ collection_name: COLLECTION_NAME });
+      await client.loadCollectionSync({ 
+        collection_name: COLLECTION_NAME,
+        timeout: 10000 
+      });
     }
   } catch (err) {
     console.error('Milvus init failed:', err);
@@ -56,11 +68,10 @@ export const upsertFaceVector = async (developerId: string, email: string, vecto
   if (!client) return;
 
   try {
-    // Delete existing if any (Milvus doesn't have unique VarChar constraint on non-PK fields)
-    // In a real app, you might store the Milvus internal ID in Turso for direct deletion
     await client.delete({
       collection_name: COLLECTION_NAME,
-      filter: `developer_id == "${developerId}" and email == "${email}"`
+      filter: `developer_id == "${developerId}" and email == "${email}"`,
+      timeout: 5000
     });
 
     await client.insert({
@@ -71,7 +82,8 @@ export const upsertFaceVector = async (developerId: string, email: string, vecto
           email: email,
           vector: vector
         }
-      ]
+      ],
+      timeout: 5000
     });
   } catch (err) {
     console.error('Milvus upsert failed:', err);
@@ -93,7 +105,8 @@ export const searchFaceVector = async (developerId: string, vector: number[], th
       filter: filter,
       limit: 1,
       params: { nprobe: 10 },
-      output_fields: ['email']
+      output_fields: ['email'],
+      timeout: 5000
     });
 
     if (results.results.length > 0) {
