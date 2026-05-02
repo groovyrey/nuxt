@@ -104,6 +104,10 @@ import {
   Check as CheckIcon
 } from 'lucide-vue-next';
 
+definePageMeta({
+  middleware: 'guest'
+});
+
 const { fetchUser } = useAuth();
 const detectorRef = ref(null);
 const loginStep = ref('password'); // 'password' or 'biometric'

@@ -180,6 +180,10 @@ import {
   Loader2 as Loader2Icon
 } from 'lucide-vue-next';
 
+definePageMeta({
+  middleware: 'guest'
+});
+
 const { fetchUser } = useAuth();
 const route = useRoute();
 const currentStep = ref(1);

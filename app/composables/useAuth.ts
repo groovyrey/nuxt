@@ -5,7 +5,9 @@ export const useAuth = () => {
   const fetchUser = async () => {
     isLoading.value = true;
     try {
-      const data = await $fetch('/api/auth/me');
+      const data = await $fetch('/api/auth/me', {
+        headers: import.meta.server ? useRequestHeaders(['cookie']) : undefined
+      });
       user.value = data?.user || null;
     } catch (e) {
       console.error('Failed to fetch user:', e);
