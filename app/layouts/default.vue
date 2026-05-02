@@ -3,7 +3,7 @@
     <Navbar v-if="showNavbar" />
     <slot />
     
-    <footer v-if="showNavbar" class="app-footer">
+    <footer v-if="showFooter" class="app-footer">
       <div class="app-container">
         <div class="footer-content">
           <p>&copy; 2024 LUFACE • SECURE ACCESS</p>
@@ -20,8 +20,10 @@
 <script setup>
 import { Github as GithubIcon, Twitter as TwitterIcon } from 'lucide-vue-next';
 const route = useRoute();
-const standaloneRoutes = ['/verify', '/setup-face', '/login', '/register'];
-const showNavbar = computed(() => !standaloneRoutes.includes(route.path));
+const chromeFreeRoutes = ['/verify', '/setup-face'];
+const footerFreeRoutes = [...chromeFreeRoutes, '/login', '/register'];
+const showNavbar = computed(() => !chromeFreeRoutes.includes(route.path));
+const showFooter = computed(() => !footerFreeRoutes.includes(route.path));
 </script>
 
 <style scoped>
@@ -58,4 +60,3 @@ const showNavbar = computed(() => !standaloneRoutes.includes(route.path));
   color: var(--text-dim);
 }
 </style>
-

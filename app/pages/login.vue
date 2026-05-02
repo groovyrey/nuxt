@@ -181,7 +181,7 @@ const handleFaceDetection = async (data) => {
 
 <style scoped>
 .auth-container {
-  min-height: 100vh;
+  min-height: calc(100vh - 64px);
   display: flex;
   align-items: center;
   justify-content: center;
