@@ -2,13 +2,14 @@ import { useDb } from '../../utils/db';
 import { hashPassword } from '../../utils/auth';
 import { validateApiKey } from '../../utils/api-key';
 import { encryptBiometrics } from '../../utils/encryption';
-import { logApiUsage } from '../../utils/usage';
+import { logApiUsage, logAudit } from '../../utils/usage';
 import { triggerWebhook } from '../../utils/webhooks';
 import { upsertFaceVector } from '../../utils/milvus';
 
 export default defineEventHandler(async (event) => {
   const apiKey = getHeader(event, 'X-API-Key');
   const url = getRequestURL(event);
+  const ip = getHeader(event, 'x-forwarded-for') || event.node.req.socket.remoteAddress || null;
 
   if (!apiKey) {
     throw createError({ statusCode: 401, statusMessage: 'API Key required' });
@@ -70,6 +71,7 @@ export default defineEventHandler(async (event) => {
     }
 
     await logApiUsage(keyRecord.id, url.pathname, 200);
+    await logAudit(devUserId, 'user.enrolled', { email, apiKeyName: keyRecord.name }, typeof ip === 'string' ? ip : null);
 
     // Trigger Webhook
     await triggerWebhook(devUserId, 'user.registered', {

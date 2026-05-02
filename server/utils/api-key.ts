@@ -34,8 +34,9 @@ export const validateApiKey = async (apiKey: string) => {
     const isValid = await bcrypt.compare(apiKey, key.key_hash);
     if (isValid) {
       // 1. Cleanup old usage data (Resetting the limit by removing old records)
-      // This maintains the rolling 24h window
+      // This maintains the rolling 24h window and keeps audit logs in sync
       await db.execute("DELETE FROM api_usage WHERE timestamp < datetime('now', '-24 hours')");
+      await db.execute("DELETE FROM audit_logs WHERE timestamp < datetime('now', '-24 hours')");
 
       // 2. Check rate limit
       const [usageRows] = await db.execute(

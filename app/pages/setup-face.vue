@@ -269,8 +269,31 @@ const goBack = () => {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  color: var(--text-main);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.scanning-tips {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: var(--text-dim);
-  font-size: 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tip span {
+  opacity: 0.8;
 }
 
 .setup-footer {
@@ -293,6 +316,14 @@ const goBack = () => {
   border-radius: 8px;
   font-weight: 800;
   cursor: pointer;
+}
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+ter;
 }
 
 .spin { animation: spin 1s linear infinite; }

@@ -28,7 +28,7 @@
           For Hosted UI redirects, use the <code>api_key</code> query parameter.
         </p>
         <div class="code-box">
-<pre><code># REST API Header
+<pre><code class="language-http"># REST API Header
 X-API-Key: lf_live_xxxxxxxxxxxxxxxx
 
 # Hosted UI Parameter
@@ -59,6 +59,10 @@ X-API-Key: lf_live_xxxxxxxxxxxxxxxx
               </tbody>
             </table>
           </div>
+          <div class="example-box">
+            <label>EXAMPLE URL</label>
+            <code>https://luface.app/setup-face?api_key=lf_live_xxxx&email=user@domain.com&redirect_url=https://your-app.com/callback</code>
+          </div>
         </div>
 
         <div class="endpoint">
@@ -78,6 +82,10 @@ X-API-Key: lf_live_xxxxxxxxxxxxxxxx
               </tbody>
             </table>
           </div>
+          <div class="example-box">
+            <label>EXAMPLE URL</label>
+            <code>https://luface.app/verify?api_key=lf_live_xxxx&email=user@domain.com&redirect_url=https://your-app.com/callback</code>
+          </div>
         </div>
       </section>
 
@@ -96,7 +104,7 @@ X-API-Key: lf_live_xxxxxxxxxxxxxxxx
             <div class="code-group">
               <label>REQUEST BODY</label>
               <div class="code-box small">
-<pre><code>{
+<pre><code class="language-json">{
   "faceDescriptor": [0.1, -0.2, ...],
   "email": "optional@limit.to"
 }</code></pre>
@@ -105,7 +113,7 @@ X-API-Key: lf_live_xxxxxxxxxxxxxxxx
             <div class="code-group">
               <label>RESPONSE (200)</label>
               <div class="code-box small">
-<pre><code>{
+<pre><code class="language-json">{
   "identified": true,
   "user": {
     "email": "user@domain.com",
@@ -176,6 +184,12 @@ import {
   Lock as LockIcon,
   Webhook as WebhookIcon
 } from 'lucide-vue-next';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/tokyo-night-dark.css';
+
+onMounted(() => {
+  hljs.highlightAll();
+});
 </script>
 
 <style scoped>
@@ -319,18 +333,25 @@ code {
   background: #000;
   border: 1px solid var(--border-dim);
   border-radius: 12px;
-  padding: 1.25rem;
-  overflow-x: auto;
-  margin: 1rem 0;
+  overflow: hidden;
+  margin: 1.5rem 0;
 }
 
-.code-box.small { padding: 1rem; }
+.code-box.small { padding: 0; }
 
 .code-box pre {
   margin: 0;
+  padding: 1.25rem;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.85rem;
   line-height: 1.6;
+  background: transparent !important;
+}
+
+.code-box code {
+  background: transparent !important;
+  padding: 0 !important;
+  color: inherit !important;
 }
 
 .code-grid {

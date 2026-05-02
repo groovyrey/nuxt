@@ -354,7 +354,7 @@ onUnmounted(() => stopCamera());
 }
 
 .progress-ring circle.bg {
-  stroke: rgba(255, 255, 255, 0.1);
+  stroke: var(--border-color);
 }
 
 .progress-ring circle.fg {
@@ -439,7 +439,7 @@ onUnmounted(() => stopCamera());
   justify-content: center;
   align-items: center;
   position: relative;
-  background: #000;
+  background: var(--bg-card);
   overflow: hidden;
 }
 
@@ -464,7 +464,7 @@ onUnmounted(() => stopCamera());
   position: absolute;
   inset: 0;
   border: 2px solid var(--accent-green);
-  opacity: 0.2;
+  opacity: 0.3;
   border-radius: 50%;
   animation: pulse 2s infinite;
 }
@@ -475,7 +475,7 @@ onUnmounted(() => stopCamera());
 }
 
 .start-btn {
-  background: transparent;
+  background: var(--glass);
   color: var(--accent-green);
   border: 1px solid var(--accent-green);
   padding: 0.8rem 1.5rem;
@@ -486,12 +486,18 @@ onUnmounted(() => stopCamera());
   display: flex;
   align-items: center;
   gap: 10px;
+  transition: all 0.2s;
+}
+
+.start-btn:hover {
+  background: rgba(var(--accent-green-rgb), 0.1);
 }
 
 .video-container {
   position: relative;
   width: 100%;
   height: 100%;
+  background: #000;
 }
 
 video {
@@ -529,7 +535,7 @@ canvas {
   border: 2px dashed rgba(var(--accent-green-rgb), 0.4);
   border-radius: 50% / 45%;
   position: relative;
-  box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 1000px var(--shadow-color);
   transition: all 0.3s ease;
 }
 

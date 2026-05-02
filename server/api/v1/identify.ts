@@ -1,11 +1,12 @@
 import { validateApiKey, updateExternalUserActivity } from '../../utils/api-key';
 import { findMatchingUserByFace } from '../../utils/auth';
-import { logApiUsage } from '../../utils/usage';
+import { logApiUsage, logAudit } from '../../utils/usage';
 import { triggerWebhook } from '../../utils/webhooks';
 
 export default defineEventHandler(async (event) => {
   const apiKey = getHeader(event, 'X-API-Key');
   const url = getRequestURL(event);
+  const ip = getHeader(event, 'x-forwarded-for') || event.node.req.socket.remoteAddress || null;
   
   if (!apiKey) {
     throw createError({
@@ -45,6 +46,7 @@ export default defineEventHandler(async (event) => {
 
   if (!matchedUser) {
     await logApiUsage(keyRecord.id, url.pathname, 200);
+    await logAudit(userId, 'identify.fail', { email, apiKeyName: keyRecord.name }, typeof ip === 'string' ? ip : null);
     return {
       match: false,
       username: null
@@ -53,6 +55,7 @@ export default defineEventHandler(async (event) => {
 
   await updateExternalUserActivity(userId, matchedUser.username);
   await logApiUsage(keyRecord.id, url.pathname, 200);
+  await logAudit(userId, 'identify.success', { email, apiKeyName: keyRecord.name }, typeof ip === 'string' ? ip : null);
 
   // Trigger Webhook
   await triggerWebhook(userId, 'face.identified', {

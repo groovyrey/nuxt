@@ -1,6 +1,6 @@
 import { validateApiKey } from '../../utils/api-key';
 import { findMatchingUserByFace } from '../../utils/auth';
-import { logApiUsage } from '../../utils/usage';
+import { logApiUsage, logAudit } from '../../utils/usage';
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
@@ -9,6 +9,7 @@ export default defineEventHandler(async (event) => {
   const apiKey = body.apiKey || query.apiKey || getHeader(event, 'X-API-Key');
   const email = body.email || query.email;
   const url = getRequestURL(event);
+  const ip = getHeader(event, 'x-forwarded-for') || event.node.req.socket.remoteAddress || null;
 
   if (!apiKey) {
     throw createError({ statusCode: 401, statusMessage: 'API Key required' });
@@ -19,6 +20,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'Invalid API Key' });
   }
 
+  const devUserId = keyRecord.user_id;
+
   if (!faceDescriptor || !email) {
     await logApiUsage(keyRecord.id, url.pathname, 400);
     throw createError({ statusCode: 400, statusMessage: 'Face data and email are required' });
@@ -27,12 +30,13 @@ export default defineEventHandler(async (event) => {
   const matchedUser = await findMatchingUserByFace(
     faceDescriptor, 
     email, 
-    keyRecord.user_id,
+    devUserId,
     keyRecord.threshold
   );
 
   if (!matchedUser) {
     await logApiUsage(keyRecord.id, url.pathname, 200);
+    await logAudit(devUserId, 'verify.fail', { email, apiKeyName: keyRecord.name }, typeof ip === 'string' ? ip : null);
     return {
       success: false,
       message: 'Biometric verification failed'
@@ -40,6 +44,7 @@ export default defineEventHandler(async (event) => {
   }
 
   await logApiUsage(keyRecord.id, url.pathname, 200);
+  await logAudit(devUserId, 'verify.success', { email, apiKeyName: keyRecord.name }, typeof ip === 'string' ? ip : null);
 
   return {
     success: true,

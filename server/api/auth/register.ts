@@ -2,10 +2,12 @@ import { useDb } from '../../utils/db';
 import { hashPassword, createSession, findMatchingUserByFace, parseDescriptor } from '../../utils/auth';
 import { useHuggingFace } from '../../utils/huggingface';
 import { encryptBiometrics } from '../../utils/encryption';
+import { logAudit } from '../../utils/usage';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const { username, email, password, gender, age, faceDescriptor, faceImage } = body;
+  const ip = getHeader(event, 'x-forwarded-for') || event.node.req.socket.remoteAddress || null;
 
   // 1. Basic Presence Validation
   if (!username || !email || !password) {
@@ -92,6 +94,7 @@ export default defineEventHandler(async (event) => {
     console.log(`User ${username} registered successfully`);
 
     await createSession(event, username);
+    await logAudit(username, 'user.created', { email }, typeof ip === 'string' ? ip : null);
 
     return { success: true, username };
   } catch (error: any) {
