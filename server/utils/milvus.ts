@@ -13,7 +13,14 @@ export const useMilvus = () => {
     milvusClient = new MilvusClient({
       address: address,
       token: process.env.MILVUS_TOKEN,
-      ssl: true // Required for Zilliz Cloud
+      ssl: true, // Required for Zilliz Cloud
+      channelOptions: {
+        // Reduce connection wait time and retries for serverless
+        'grpc.initial_reconnect_backoff_ms': 1000,
+        'grpc.max_reconnect_backoff_ms': 5000,
+        'grpc.keepalive_time_ms': 60000,
+        'grpc.keepalive_timeout_ms': 20000,
+      }
     });
   }
   return milvusClient;
