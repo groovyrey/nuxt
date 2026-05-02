@@ -4,6 +4,7 @@ import { validateApiKey } from '../../utils/api-key';
 import { encryptBiometrics } from '../../utils/encryption';
 import { logApiUsage } from '../../utils/usage';
 import { triggerWebhook } from '../../utils/webhooks';
+import { upsertFaceVector } from '../../utils/milvus';
 
 export default defineEventHandler(async (event) => {
   const apiKey = getHeader(event, 'X-API-Key');
@@ -48,6 +49,25 @@ export default defineEventHandler(async (event) => {
       'INSERT INTO external_users (developer_id, email, face_descriptor) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE face_descriptor = ?',
       [devUserId, email, descriptorToStore, descriptorToStore]
     );
+
+    // Sync to Milvus
+    try {
+      let vectorToStore: number[];
+      if (Array.isArray(faceDescriptor[0])) {
+        // Average multiple descriptors if provided
+        const length = (faceDescriptor[0] as number[]).length;
+        const avg = new Array(length).fill(0);
+        for (const d of faceDescriptor as number[][]) {
+          for (let i = 0; i < length; i++) avg[i] += d[i];
+        }
+        vectorToStore = avg.map(v => v / faceDescriptor.length);
+      } else {
+        vectorToStore = faceDescriptor as number[];
+      }
+      await upsertFaceVector(devUserId, email, vectorToStore);
+    } catch (milvusError) {
+      console.error('Milvus sync failed:', milvusError);
+    }
 
     await logApiUsage(keyRecord.id, url.pathname, 200);
 

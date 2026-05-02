@@ -151,18 +151,48 @@ export function compareManyToMany(inputs: number[][], stored: number[][]) {
   return minDistance;
 }
 
+import { searchFaceVector } from './milvus';
+
 export const findMatchingUserByFace = async (faceDescriptor: number[] | number[][], targetIdentifier: string, developerId?: string, customThreshold?: number) => {
   const db = useDb();
-  
+  const threshold = customThreshold || EUCLIDEAN_THRESHOLD;
+  const inputDescriptors = Array.isArray(faceDescriptor[0]) 
+    ? (faceDescriptor as number[][]) 
+    : [faceDescriptor as number[]];
+
+  // 1. Try Milvus Vector Search if it's an external user search
+  if (developerId) {
+    // We use the first descriptor (or average) for Milvus search
+    const queryVector = inputDescriptors[0];
+    const milvusResult = await searchFaceVector(developerId, queryVector, threshold);
+    
+    if (milvusResult) {
+      // If we found a candidate via Milvus, fetch their full data from MySQL to verify/return
+      const [rows] = await db.execute(
+        'SELECT email as username, face_descriptor FROM external_users WHERE developer_id = ? AND email = ?',
+        [developerId, milvusResult.email]
+      );
+      const users = rows as any[];
+      if (users.length > 0) {
+        console.log(`[MILVUS MATCH] User: ${milvusResult.email}, Distance: ${milvusResult.distance.toFixed(4)}`);
+        return users[0];
+      }
+    }
+  }
+
+  // 2. Fallback to Legacy MySQL Search
   let query: string;
   let params: any[] = [];
   
   if (developerId) {
-    // Search in external_users table for API users
-    query = 'SELECT email as username, face_descriptor FROM external_users WHERE developer_id = ? AND email = ? AND face_descriptor IS NOT NULL';
-    params = [developerId, targetIdentifier];
+    if (targetIdentifier) {
+      query = 'SELECT email as username, face_descriptor FROM external_users WHERE developer_id = ? AND email = ? AND face_descriptor IS NOT NULL';
+      params = [developerId, targetIdentifier];
+    } else {
+      query = 'SELECT email as username, face_descriptor FROM external_users WHERE developer_id = ? AND face_descriptor IS NOT NULL';
+      params = [developerId];
+    }
   } else {
-    // Search in native users table
     query = 'SELECT username, face_descriptor FROM users WHERE username = ? AND face_descriptor IS NOT NULL';
     params = [targetIdentifier];
   }
@@ -170,25 +200,13 @@ export const findMatchingUserByFace = async (faceDescriptor: number[] | number[]
   const [rows] = await db.execute(query, params);
   const users = rows as any[];
 
-  if (users.length === 0) return null;
-
-  const user = users[0];
-  const storedDescriptors = parseDescriptor(user.face_descriptor);
-  if (!storedDescriptors) return null;
-
-  const inputDescriptors = Array.isArray(faceDescriptor[0]) 
-    ? (faceDescriptor as number[][]) 
-    : [faceDescriptor as number[]];
-
-  const distance = compareManyToMany(inputDescriptors, storedDescriptors);
-  
-  const threshold = customThreshold || EUCLIDEAN_THRESHOLD;
-
-  if (distance < threshold) {
-    console.log(`[MATCH] User: ${user.username}, Distance: ${distance.toFixed(4)} (Threshold: ${threshold})`);
-    return user;
+  for (const user of users) {
+    const storedDescriptors = parseDescriptor(user.face_descriptor);
+    if (!storedDescriptors) continue;
+    const distance = compareManyToMany(inputDescriptors, storedDescriptors);
+    if (distance <= threshold) {
+      return { ...user, distance };
+    }
   }
-
-  console.log(`[NO MATCH] User: ${user.username}, Distance: ${distance.toFixed(4)} (Threshold: ${threshold})`);
   return null;
 };
