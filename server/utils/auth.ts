@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { useDb } from './db';
 import { decryptBiometrics } from './encryption';
+import { searchFaceVector } from './milvus';
 
 export const hashPassword = async (password: string) => {
   return await bcrypt.hash(password, 10);
@@ -75,7 +76,7 @@ export const requireAuth = async (event: any) => {
   return session;
 };
 
-export const EUCLIDEAN_THRESHOLD = 0.45; // Slightly more relaxed for multiple samples
+export const EUCLIDEAN_THRESHOLD = 0.4; // Tightened for better security
 export const MAX_DESCRIPTORS = 12;
 
 export function parseDescriptor(d: any): number[][] | null {
@@ -151,9 +152,7 @@ export function compareManyToMany(inputs: number[][], stored: number[][]) {
   }
   return minDistance;
 }
-export const EUCLIDEAN_THRESHOLD = 0.4; // Tightened from 0.45 for better security
-export const MAX_DESCRIPTORS = 12;
-... rest of code ...
+
 export const findMatchingUserByFace = async (faceDescriptor: number[] | number[][], targetIdentifier: string, developerId?: string, customThreshold?: number) => {
   const db = useDb();
   const threshold = customThreshold || EUCLIDEAN_THRESHOLD;
@@ -177,7 +176,7 @@ export const findMatchingUserByFace = async (faceDescriptor: number[] | number[]
     }
 
     const milvusResult = await searchFaceVector(developerId, queryVector, threshold, targetIdentifier);
-
+    
     if (milvusResult) {
       // Double check that the match is for the requested user
       if (targetIdentifier && milvusResult.email !== targetIdentifier) {
@@ -197,7 +196,6 @@ export const findMatchingUserByFace = async (faceDescriptor: number[] | number[]
       }
     }
   }
-
 
   // 2. Fallback to Legacy SQLite Search
   let query: string;
